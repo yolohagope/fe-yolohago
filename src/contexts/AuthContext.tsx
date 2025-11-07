@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(firebaseUser);
       
       // TODO: Habilitar cuando el backend esté listo
-      const ENABLE_BACKEND_AUTH = false;
+      const ENABLE_BACKEND_AUTH = true;
       
       if (firebaseUser && ENABLE_BACKEND_AUTH) {
         // Usuario logueado en Firebase, ahora autenticar con backend
