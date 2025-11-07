@@ -18,8 +18,20 @@ export async function fetchTasks(): Promise<Task[]> {
       throw new Error(`Error al cargar tareas: ${response.statusText}`);
     }
     
-    const tasks: Task[] = await response.json();
-    return tasks;
+    const data = await response.json();
+    
+    // Django REST Framework devuelve: {count, next, previous, results: []}
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+    
+    // Fallback: si es un array directo
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    console.warn('⚠️ Formato de respuesta inesperado:', data);
+    return [];
   } catch (error: any) {
     console.error('Error fetching tasks:', error);
     
@@ -29,7 +41,8 @@ export async function fetchTasks(): Promise<Task[]> {
       await auth.signOut();
     }
     
-    throw error;
+    // Retornar array vacío en caso de error
+    return [];
   }
 }
 

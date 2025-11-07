@@ -61,7 +61,7 @@ export function MuroTareas() {
   }, []);
 
   // Filtrar y ordenar tareas
-  const filteredTasks = tasks
+  const filteredTasks = (Array.isArray(tasks) ? tasks : [])
     .filter(task => {
       const matchesSearch = searchTerm === '' || 
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
