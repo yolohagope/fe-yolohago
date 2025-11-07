@@ -8,9 +8,10 @@ import { es } from 'date-fns/locale';
 
 interface TarjetaTareaProps {
   task: Task;
+  onViewDetails: (task: Task) => void;
 }
 
-export function TarjetaTarea({ task }: TarjetaTareaProps) {
+export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
   const categoryColors: Record<string, string> = {
     'Compras': 'bg-blue-50 text-blue-700 border-blue-200',
     'Trámites': 'bg-red-50 text-red-700 border-red-200',
@@ -73,6 +74,7 @@ export function TarjetaTarea({ task }: TarjetaTareaProps) {
         <Button 
           className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
           size="default"
+          onClick={() => onViewDetails(task)}
         >
           Ver Detalles
         </Button>

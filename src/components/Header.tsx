@@ -1,4 +1,4 @@
-import { SignOut, User, PlusCircle, MagnifyingGlass } from '@phosphor-icons/react';
+import { SignOut, User, PlusCircle, MagnifyingGlass, ListChecks } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -18,7 +18,7 @@ interface HeaderProps {
 }
 
 export function Header({ currentView, onViewChange }: HeaderProps) {
-  const { user } = useAuth();
+    const { user } = useAuth();
 
   async function handleLogout() {
     try {
@@ -62,6 +62,13 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <PlusCircle weight="bold" size={18} />
                 Publicar tarea
               </Button>
+              <Button
+                variant="ghost"
+                className="gap-2"
+              >
+                <ListChecks weight="bold" size={18} />
+                Mis tareas
+              </Button>
             </nav>
           </div>
           
@@ -90,6 +97,10 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 <DropdownMenuItem onClick={() => onViewChange('publicar')}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   <span>Publicar tarea</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <ListChecks className="mr-2 h-4 w-4" />
+                  <span>Mis tareas</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </div>

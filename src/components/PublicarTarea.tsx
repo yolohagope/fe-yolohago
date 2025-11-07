@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PlusCircle, Paperclip, X } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -16,6 +17,7 @@ interface PublicarTareaProps {
 
 export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<TaskCategory>('Compras');
@@ -76,6 +78,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
 
       setTimeout(() => {
         if (onSuccess) onSuccess();
+        navigate('/?tarea=publicada');
       }, 1500);
       
     } catch (err: any) {
@@ -123,7 +126,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium mb-2 text-[#4285F4]">
+              <label htmlFor="title" className="block text-sm font-medium mb-2">
                 ¿Qué necesitas?
               </label>
               <Input
@@ -138,7 +141,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium mb-2 text-[#EA4335]">
+              <label htmlFor="description" className="block text-sm font-medium mb-2">
                 Da más detalles
               </label>
               <Textarea
@@ -154,7 +157,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="category" className="block text-sm font-medium mb-2 text-[#FBBC04]">
+                <label htmlFor="category" className="block text-sm font-medium mb-2">
                   Categoría
                 </label>
                 <Select value={category} onValueChange={(value) => setCategory(value as TaskCategory)}>
@@ -172,7 +175,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
               </div>
 
               <div>
-                <label htmlFor="duration" className="block text-sm font-medium mb-2 text-[#34A853]">
+                <label htmlFor="duration" className="block text-sm font-medium mb-2">
                   Duración (máx. 1 día)
                 </label>
                 <Select value={duration} onValueChange={setDuration}>

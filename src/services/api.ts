@@ -1,26 +1,38 @@
 import { Task } from '@/lib/types';
+import { authenticatedFetch, getAuthToken } from './backend-auth';
 
 /**
  * Configuración de la API
- * En desarrollo: carga datos desde archivos JSON locales
- * En producción: cambia BASE_URL a tu API real
+ * Usa el backend real de YoloHago
  */
-const BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = 'https://api.yolohago.pe/api';
+const USE_BACKEND = false; // Cambiar a true cuando el backend permita CORS desde localhost
 
 /**
  * Servicio para obtener todas las tareas
- * Para migrar a API real: simplemente actualiza la URL y mantén el resto del código
  */
 export async function fetchTasks(): Promise<Task[]> {
   try {
-    const response = await fetch(`${BASE_URL}/data/tasks.json`);
-    
-    if (!response.ok) {
-      throw new Error(`Error al cargar tareas: ${response.statusText}`);
+    if (USE_BACKEND) {
+      const response = await authenticatedFetch('/tasks/', {
+        method: 'GET'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al cargar tareas: ${response.statusText}`);
+      }
+      
+      const tasks: Task[] = await response.json();
+      return tasks;
+    } else {
+      // Fallback a JSON local
+      const response = await fetch('/data/tasks.json');
+      if (!response.ok) {
+        throw new Error(`Error al cargar tareas: ${response.statusText}`);
+      }
+      const tasks: Task[] = await response.json();
+      return tasks;
     }
-    
-    const tasks: Task[] = await response.json();
-    return tasks;
   } catch (error) {
     console.error('Error fetching tasks:', error);
     throw error;
@@ -29,13 +41,27 @@ export async function fetchTasks(): Promise<Task[]> {
 
 /**
  * Servicio para obtener una tarea por ID
- * Para migrar a API real: cambia la URL a `${BASE_URL}/api/tasks/${id}`
  */
 export async function fetchTaskById(id: string): Promise<Task | null> {
   try {
-    const tasks = await fetchTasks();
-    const task = tasks.find(t => t.id === id);
-    return task || null;
+    if (USE_BACKEND) {
+      const response = await authenticatedFetch(`/tasks/${id}/`, {
+        method: 'GET'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error(`Error al cargar tarea: ${response.statusText}`);
+      }
+      
+      const task: Task = await response.json();
+      return task;
+    } else {
+      // Fallback a JSON local
+      const tasks = await fetchTasks();
+      const task = tasks.find(t => t.id === id);
+      return task || null;
+    }
   } catch (error) {
     console.error('Error fetching task by id:', error);
     throw error;
@@ -82,48 +108,63 @@ export interface CreateTaskPayload {
 }
 
 /**
- * Servicio para crear una nueva tarea (placeholder para futuro)
- * Para implementar con API real: descomentar y actualizar URL
+ * Servicio para crear una nueva tarea
  */
 export async function createTask(payload: CreateTaskPayload): Promise<Task> {
-  // TODO: Implementar cuando tengas API backend
-  // const response = await fetch(`${BASE_URL}/api/tasks`, {
-  //   method: 'POST',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify(payload),
-  // });
-  // return response.json();
-  
-  throw new Error('createTask no está implementado todavía');
+  try {
+    const response = await authenticatedFetch('/tasks/', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al crear tarea: ${response.statusText}`);
+    }
+    
+    const task: Task = await response.json();
+    return task;
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
+  }
 }
 
 /**
- * Servicio para actualizar una tarea (placeholder para futuro)
+ * Servicio para actualizar una tarea
  */
 export async function updateTask(id: string, payload: Partial<Task>): Promise<Task> {
-  // TODO: Implementar cuando tengas API backend
-  // const response = await fetch(`${BASE_URL}/api/tasks/${id}`, {
-  //   method: 'PATCH',
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //   },
-  //   body: JSON.stringify(payload),
-  // });
-  // return response.json();
-  
-  throw new Error('updateTask no está implementado todavía');
+  try {
+    const response = await authenticatedFetch(`/tasks/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al actualizar tarea: ${response.statusText}`);
+    }
+    
+    const task: Task = await response.json();
+    return task;
+  } catch (error) {
+    console.error('Error updating task:', error);
+    throw error;
+  }
 }
 
 /**
- * Servicio para eliminar una tarea (placeholder para futuro)
+ * Servicio para eliminar una tarea
  */
 export async function deleteTask(id: string): Promise<void> {
-  // TODO: Implementar cuando tengas API backend
-  // await fetch(`${BASE_URL}/api/tasks/${id}`, {
-  //   method: 'DELETE',
-  // });
-  
-  throw new Error('deleteTask no está implementado todavía');
+  try {
+    const response = await authenticatedFetch(`/tasks/${id}/`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al eliminar tarea: ${response.statusText}`);
+    }
+  } catch (error) {
+    console.error('Error deleting task:', error);
+    throw error;
+  }
 }
