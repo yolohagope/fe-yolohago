@@ -6,7 +6,7 @@ import { authenticatedFetch, getAuthToken } from './backend-auth';
  * Usa el backend real de YoloHago
  */
 const API_BASE_URL = 'https://api.yolohago.pe/api';
-const USE_BACKEND = true; // Cambiar a true cuando el backend permita CORS desde https://yolohago.pe
+const USE_BACKEND = true; // TODO: Cambiar a true cuando el backend tenga CORS configurado y autenticación funcionando
 
 /**
  * Servicio para obtener todas las tareas

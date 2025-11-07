@@ -24,7 +24,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       
-      if (firebaseUser) {
+      // TODO: Habilitar cuando el backend esté listo
+      const ENABLE_BACKEND_AUTH = false;
+      
+      if (firebaseUser && ENABLE_BACKEND_AUTH) {
         // Usuario logueado en Firebase, ahora autenticar con backend
         try {
           await authenticateWithBackend(firebaseUser);
