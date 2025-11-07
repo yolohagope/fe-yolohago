@@ -3,10 +3,13 @@ import { User } from 'firebase/auth';
 const API_BASE_URL = 'https://api.yolohago.pe/api';
 
 /**
- * Obtiene el token de Firebase del usuario actual
+ * Obtiene el token de Firebase del usuario actual (siempre fresco)
+ * Firebase cachea automáticamente el token y lo refresca si está por expirar
  */
 export async function getFirebaseToken(user: User): Promise<string> {
-  return await user.getIdToken();
+  // forceRefresh: true asegura que obtenemos un token válido
+  // Firebase lo refrescará automáticamente si está expirado o por expirar
+  return await user.getIdToken(true);
 }
 
 /**
@@ -19,7 +22,10 @@ export async function authenticatedFetch(user: User | null, endpoint: string, op
     throw error;
   }
 
+  // Siempre obtener un token fresco antes de cada petición
   const firebaseToken = await getFirebaseToken(user);
+  
+  console.log('🔑 Token renovado para:', endpoint);
 
   const headers = {
     ...options.headers,
