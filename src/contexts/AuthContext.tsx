@@ -1,47 +1,24 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { authenticateWithBackend, removeAuthToken } from '@/services/backend-auth';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  backendAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({ 
   user: null, 
-  loading: true,
-  backendAuthenticated: false 
+  loading: true
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [backendAuthenticated, setBackendAuthenticated] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
-      
-      if (firebaseUser) {
-        // Usuario logueado en Firebase, autenticar con backend
-        try {
-          await authenticateWithBackend(firebaseUser);
-          setBackendAuthenticated(true);
-          console.log('✅ Usuario autenticado con el backend');
-        } catch (error) {
-          console.error('❌ Error al autenticar con el backend:', error);
-          setBackendAuthenticated(false);
-          // Si falla la autenticación con backend, cerrar sesión
-          await auth.signOut();
-        }
-      } else {
-        // Usuario no logueado, limpiar token
-        removeAuthToken();
-        setBackendAuthenticated(false);
-      }
-      
       setLoading(false);
     });
 
@@ -49,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, backendAuthenticated }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );

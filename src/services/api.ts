@@ -9,7 +9,8 @@ const API_BASE_URL = 'https://api.yolohago.pe/api';
  */
 export async function fetchTasks(): Promise<Task[]> {
   try {
-    const response = await authenticatedFetch('/tasks/', {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/tasks/', {
       method: 'GET'
     });
     
@@ -37,7 +38,8 @@ export async function fetchTasks(): Promise<Task[]> {
  */
 export async function fetchTaskById(id: string): Promise<Task | null> {
   try {
-    const response = await authenticatedFetch(`/tasks/${id}/`, {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/tasks/${id}/`, {
       method: 'GET'
     });
     
@@ -103,7 +105,8 @@ export interface CreateTaskPayload {
  */
 export async function createTask(payload: CreateTaskPayload): Promise<Task> {
   try {
-    const response = await authenticatedFetch('/tasks/', {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/tasks/', {
       method: 'POST',
       body: JSON.stringify(payload)
     });
@@ -130,7 +133,8 @@ export async function createTask(payload: CreateTaskPayload): Promise<Task> {
  */
 export async function updateTask(id: string, payload: Partial<Task>): Promise<Task> {
   try {
-    const response = await authenticatedFetch(`/tasks/${id}/`, {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/tasks/${id}/`, {
       method: 'PATCH',
       body: JSON.stringify(payload)
     });
@@ -157,7 +161,8 @@ export async function updateTask(id: string, payload: Partial<Task>): Promise<Ta
  */
 export async function deleteTask(id: string): Promise<void> {
   try {
-    const response = await authenticatedFetch(`/tasks/${id}/`, {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/tasks/${id}/`, {
       method: 'DELETE'
     });
     
