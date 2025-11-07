@@ -25,25 +25,14 @@ export async function authenticateWithBackend(firebaseUser: User): Promise<strin
     const firebaseToken = await firebaseUser.getIdToken();
     
     console.log('🔑 Firebase Token (primeros 50 chars):', firebaseToken.substring(0, 50));
-    console.log('📤 Enviando al backend:', {
-      uid: firebaseUser.uid,
-      email: firebaseUser.email,
-      displayName: firebaseUser.displayName
-    });
     
-    // Enviar al backend
+    // Enviar al backend (el backend extrae uid, email, etc del token JWT)
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${firebaseToken}`
-      },
-      body: JSON.stringify({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        displayName: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL
-      })
+      }
     });
 
     if (!response.ok) {
