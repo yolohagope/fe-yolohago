@@ -3,6 +3,19 @@ import { User } from 'firebase/auth';
 const API_BASE_URL = 'https://api.yolohago.pe/api';
 const TOKEN_COOKIE_NAME = 'yolohago_auth_token';
 
+interface BackendAuthResponse {
+  success: boolean;
+  token: string;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    phone: string;
+    photo_url: string;
+    created_at: string;
+  };
+}
+
 /**
  * Envía el token de Firebase al backend y recibe un token de Django
  */
@@ -32,11 +45,18 @@ export async function authenticateWithBackend(firebaseUser: User): Promise<strin
       throw new Error(`Error al autenticar con el servidor: ${response.status} ${errorText}`);
     }
 
-    const data = await response.json();
+    const data: BackendAuthResponse = await response.json();
+    
+    if (!data.success) {
+      throw new Error('Autenticación fallida en el backend');
+    }
+
     const djangoToken = data.token;
 
     // Guardar token en cookie segura
     setAuthToken(djangoToken);
+
+    console.log('✅ Usuario backend:', data.user);
 
     return djangoToken;
   } catch (error) {
@@ -102,8 +122,10 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
     'Content-Type': 'application/json',
   };
 
-  return fetch(`${API_BASE_URL}${endpoint}`, {
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers
   });
+
+  return response;
 }
