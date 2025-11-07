@@ -1,8 +1,50 @@
-import { Task } from '@/lib/types';
+import { Task, Category } from '@/lib/types';
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
 
 const API_BASE_URL = 'https://api.yolohago.pe/api';
+
+/**
+ * Servicio para obtener todas las categorías
+ */
+export async function fetchCategories(): Promise<Category[]> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/categories/', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al cargar categorías: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Django REST Framework devuelve: {count, next, previous, results: []}
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+    
+    // Fallback: si es un array directo
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    console.warn('⚠️ Formato de respuesta inesperado:', data);
+    return [];
+  } catch (error: any) {
+    console.error('Error fetching categories:', error);
+    
+    // Si es error de autenticación, cerrar sesión
+    if (error.name === 'AuthenticationError') {
+      console.warn('⚠️ Error de autenticación, cerrando sesión...');
+      await auth.signOut();
+    }
+    
+    // Retornar array vacío en caso de error
+    return [];
+  }
+}
 
 /**
  * Servicio para obtener todas las tareas

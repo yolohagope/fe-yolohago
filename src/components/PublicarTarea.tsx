@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PlusCircle, Paperclip, X } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TaskCategory } from '@/lib/types';
+import { TaskCategory, Category } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { createTask, CreateTaskPayload } from '@/services/api';
-
-const categories: TaskCategory[] = ['Compras', 'Trámites', 'Delivery', 'Limpieza', 'Tecnología', 'Otro'];
+import { createTask, CreateTaskPayload, fetchCategories } from '@/services/api';
 
 interface PublicarTareaProps {
   onSuccess?: () => void;
@@ -21,7 +19,8 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<TaskCategory>('Compras');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [category, setCategory] = useState<TaskCategory>('');
   const [duration, setDuration] = useState('Menos de 1 hora');
   const [payment, setPayment] = useState('');
   const [location, setLocation] = useState('Lima');
@@ -29,6 +28,23 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Cargar categorías al montar el componente
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+        // Establecer la primera categoría como default
+        if (data.length > 0) {
+          setCategory(data[0].name);
+        }
+      } catch (err) {
+        console.error('Error cargando categorías:', err);
+      }
+    }
+    loadCategories();
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,7 +96,9 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
       setPayment('');
       setLocation('Lima');
       setFiles([]);
-      setCategory('Compras');
+      if (categories.length > 0) {
+        setCategory(categories[0].name);
+      }
       setDuration('Menos de 1 hora');
 
       setTimeout(() => {
@@ -168,14 +186,14 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
                 <label htmlFor="category" className="block text-sm font-medium mb-2">
                   Categoría
                 </label>
-                <Select value={category} onValueChange={(value) => setCategory(value as TaskCategory)}>
+                <Select value={category} onValueChange={(value) => setCategory(value)}>
                   <SelectTrigger id="category" className="h-12">
                     <SelectValue placeholder="Elige una categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
+                      <SelectItem key={cat.id} value={cat.name}>
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -1,4 +1,12 @@
-export type TaskCategory = 'Compras' | 'Trámites' | 'Delivery' | 'Limpieza' | 'Tecnología' | 'Otro';
+export type TaskCategory = string; // Ahora es dinámico desde el backend
+
+export interface Category {
+  id: number;
+  name: string;
+  slug: string;
+  icon?: string;
+  description?: string;
+}
 
 export interface Task {
   id: string;

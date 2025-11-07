@@ -6,10 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { TarjetaTarea } from './TarjetaTarea';
 import { TaskDetailDialog } from './TaskDetailDialog';
-import { fetchTasks } from '@/services/api';
-import { Task, TaskCategory } from '@/lib/types';
+import { fetchTasks, fetchCategories } from '@/services/api';
+import { Task, TaskCategory, Category } from '@/lib/types';
 
-const categories: (TaskCategory | 'Todas')[] = ['Todas', 'Compras', 'Trámites', 'Delivery', 'Limpieza', 'Tecnología', 'Otro'];
 const locations = ['Cualquiera', 'Centro de Lima', 'Miraflores', 'San Isidro', 'Surco', 'La Molina', 'Barranco', 'Remoto'];
 const durations = ['Cualquiera', 'Menos de 1 hora', '1-2 horas', '2-4 horas', 'Más de 4 horas'];
 const priceRanges = [
@@ -29,7 +28,8 @@ const sortOptions = [
 
 export function MuroTareas() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<TaskCategory | 'Todas'>('Todas');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const [selectedLocation, setSelectedLocation] = useState('Cualquiera');
   const [selectedDuration, setSelectedDuration] = useState('Cualquiera');
   const [sortBy, setSortBy] = useState('relevancia');
@@ -41,23 +41,26 @@ export function MuroTareas() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Cargar tareas al montar el componente
+    // Cargar tareas desde el API
   useEffect(() => {
-    async function loadTasks() {
+    async function loadData() {
       try {
         setLoading(true);
-        setError(null);
-        const data = await fetchTasks();
-        setTasks(data);
-      } catch (err) {
-        setError('Error al cargar las tareas. Por favor, intenta nuevamente.');
-        console.error('Error loading tasks:', err);
+        const [tasksData, categoriesData] = await Promise.all([
+          fetchTasks(),
+          fetchCategories()
+        ]);
+        setTasks(tasksData);
+        setCategories(categoriesData);
+      } catch (err: any) {
+        console.error('Error cargando datos:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     }
     
-    loadTasks();
+    loadData();
   }, []);
 
   // Filtrar y ordenar tareas
@@ -172,14 +175,15 @@ export function MuroTareas() {
               </div>
 
               {/* Categoría */}
-              <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as TaskCategory | 'Todas')}>
+              <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
                 <SelectTrigger className="h-10">
                   <SelectValue placeholder="Categoría" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Todas">Todas</SelectItem>
                   {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
+                    <SelectItem key={category.id} value={category.name}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -282,14 +286,15 @@ export function MuroTareas() {
                     {/* Categoría */}
                     <div>
                       <label className="text-sm font-medium text-foreground mb-2 block">Categoría</label>
-                      <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as TaskCategory | 'Todas')}>
+                      <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value)}>
                         <SelectTrigger className="h-10">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="Todas">Todas</SelectItem>
                           {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
+                            <SelectItem key={category.id} value={category.name}>
+                              {category.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
