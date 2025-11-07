@@ -24,19 +24,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       
-      // TODO: Habilitar cuando el backend esté listo
-      const ENABLE_BACKEND_AUTH = true;
-      
-      if (firebaseUser && ENABLE_BACKEND_AUTH) {
-        // Usuario logueado en Firebase, ahora autenticar con backend
+      if (firebaseUser) {
+        // Usuario logueado en Firebase, autenticar con backend
         try {
           await authenticateWithBackend(firebaseUser);
           setBackendAuthenticated(true);
           console.log('✅ Usuario autenticado con el backend');
         } catch (error) {
           console.error('❌ Error al autenticar con el backend:', error);
-          console.warn('⚠️ Continuando sin autenticación de backend (modo desarrollo)');
           setBackendAuthenticated(false);
+          // Si falla la autenticación con backend, cerrar sesión
+          await auth.signOut();
         }
       } else {
         // Usuario no logueado, limpiar token

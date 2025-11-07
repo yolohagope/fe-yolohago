@@ -113,7 +113,9 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
   const token = getAuthToken();
   
   if (!token) {
-    throw new Error('No hay token de autenticación');
+    const error = new Error('No hay token de autenticación');
+    error.name = 'AuthenticationError';
+    throw error;
   }
 
   console.log('🔑 Usando token:', token.substring(0, 20) + '...');
@@ -136,6 +138,14 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
       status: response.status,
       error: errorText
     });
+    
+    // Si es 401, el token expiró o es inválido
+    if (response.status === 401) {
+      removeAuthToken();
+      const error = new Error('Token inválido o expirado');
+      error.name = 'AuthenticationError';
+      throw error;
+    }
   }
 
   return response;

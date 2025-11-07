@@ -1,40 +1,33 @@
 import { Task } from '@/lib/types';
-import { authenticatedFetch, getAuthToken } from './backend-auth';
+import { authenticatedFetch } from './backend-auth';
+import { auth } from '@/lib/firebase';
 
-/**
- * Configuración de la API
- * Usa el backend real de YoloHago
- */
 const API_BASE_URL = 'https://api.yolohago.pe/api';
-const USE_BACKEND = true; // TODO: Cambiar a true cuando el backend tenga CORS configurado y autenticación funcionando
 
 /**
  * Servicio para obtener todas las tareas
  */
 export async function fetchTasks(): Promise<Task[]> {
   try {
-    if (USE_BACKEND) {
-      const response = await authenticatedFetch('/tasks/', {
-        method: 'GET'
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Error al cargar tareas: ${response.statusText}`);
-      }
-      
-      const tasks: Task[] = await response.json();
-      return tasks;
-    } else {
-      // Fallback a JSON local
-      const response = await fetch('/data/tasks.json');
-      if (!response.ok) {
-        throw new Error(`Error al cargar tareas: ${response.statusText}`);
-      }
-      const tasks: Task[] = await response.json();
-      return tasks;
+    const response = await authenticatedFetch('/tasks/', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al cargar tareas: ${response.statusText}`);
     }
-  } catch (error) {
+    
+    const tasks: Task[] = await response.json();
+    return tasks;
+  } catch (error: any) {
     console.error('Error fetching tasks:', error);
+    
+    // Si es error de autenticación, cerrar sesión
+    if (error.name === 'AuthenticationError') {
+      console.warn('⚠️ Error de autenticación, cerrando sesión...');
+      await auth.signOut();
+    }
+    
     throw error;
   }
 }
@@ -44,26 +37,24 @@ export async function fetchTasks(): Promise<Task[]> {
  */
 export async function fetchTaskById(id: string): Promise<Task | null> {
   try {
-    if (USE_BACKEND) {
-      const response = await authenticatedFetch(`/tasks/${id}/`, {
-        method: 'GET'
-      });
-      
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error(`Error al cargar tarea: ${response.statusText}`);
-      }
-      
-      const task: Task = await response.json();
-      return task;
-    } else {
-      // Fallback a JSON local
-      const tasks = await fetchTasks();
-      const task = tasks.find(t => t.id === id);
-      return task || null;
+    const response = await authenticatedFetch(`/tasks/${id}/`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Error al cargar tarea: ${response.statusText}`);
     }
-  } catch (error) {
+    
+    const task: Task = await response.json();
+    return task;
+  } catch (error: any) {
     console.error('Error fetching task by id:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
     throw error;
   }
 }
@@ -123,8 +114,13 @@ export async function createTask(payload: CreateTaskPayload): Promise<Task> {
     
     const task: Task = await response.json();
     return task;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating task:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
     throw error;
   }
 }
@@ -145,8 +141,13 @@ export async function updateTask(id: string, payload: Partial<Task>): Promise<Ta
     
     const task: Task = await response.json();
     return task;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating task:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
     throw error;
   }
 }
@@ -163,8 +164,13 @@ export async function deleteTask(id: string): Promise<void> {
     if (!response.ok) {
       throw new Error(`Error al eliminar tarea: ${response.statusText}`);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting task:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
     throw error;
   }
 }
