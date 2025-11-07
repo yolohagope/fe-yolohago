@@ -1,28 +1,49 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { MagnifyingGlass, Funnel } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TarjetaTarea } from './TarjetaTarea';
-import { mockTasks } from '@/lib/mockData';
-import { TaskCategory } from '@/lib/types';
+import { fetchTasks } from '@/services/api';
+import { Task, TaskCategory } from '@/lib/types';
 
 const categories: (TaskCategory | 'Todas')[] = ['Todas', 'Compras', 'Trámites', 'Delivery', 'Limpieza', 'Tecnología', 'Otro'];
 
 export function MuroTareas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory | 'Todas'>('Todas');
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredTasks = useMemo(() => {
-    return mockTasks.filter(task => {
-      const matchesSearch = searchTerm === '' || 
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesCategory = selectedCategory === 'Todas' || task.category === selectedCategory;
-      
-      return matchesSearch && matchesCategory;
-    });
-  }, [searchTerm, selectedCategory]);
+  // Cargar tareas al montar el componente
+  useEffect(() => {
+    async function loadTasks() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchTasks();
+        setTasks(data);
+      } catch (err) {
+        setError('Error al cargar las tareas. Por favor, intenta nuevamente.');
+        console.error('Error loading tasks:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    loadTasks();
+  }, []);
+
+  // Filtrar tareas basado en búsqueda y categoría
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = searchTerm === '' || 
+      task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = selectedCategory === 'Todas' || task.category === selectedCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +104,31 @@ export function MuroTareas() {
           )}
         </div>
 
-        {filteredTasks.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-16 px-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4 animate-pulse">
+              <MagnifyingGlass weight="duotone" className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Cargando tareas...
+            </h3>
+            <p className="text-muted-foreground">
+              Por favor espera un momento
+            </p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-16 px-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+              <MagnifyingGlass weight="duotone" className="w-8 h-8 text-destructive" />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              Error al cargar tareas
+            </h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-4">
+              {error}
+            </p>
+          </div>
+        ) : filteredTasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTasks.map((task) => (
               <TarjetaTarea key={task.id} task={task} />

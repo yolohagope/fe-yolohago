@@ -22,4 +22,5 @@ export default defineConfig({
       '@': resolve(projectRoot, 'src')
     }
   },
+  base: process.env.GITHUB_PAGES === 'true' ? '/fe-yolohago/' : '/',
 });
