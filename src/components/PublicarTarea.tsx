@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TaskCategory } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { createTask, CreateTaskPayload } from '@/services/api';
 
 const categories: TaskCategory[] = ['Compras', 'Trámites', 'Delivery', 'Limpieza', 'Tecnología', 'Otro'];
 
@@ -23,6 +24,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
   const [category, setCategory] = useState<TaskCategory>('Compras');
   const [duration, setDuration] = useState('Menos de 1 hora');
   const [payment, setPayment] = useState('');
+  const [location, setLocation] = useState('Lima');
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,30 +50,35 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
     }
 
     try {
-      // TODO: Aquí irá la llamada a la API para crear la tarea
-      // Por ahora simulamos un delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newTask = {
+      // Preparar el payload para el API
+      const payload: CreateTaskPayload = {
         title: title.trim(),
         description: description.trim(),
         category,
-        duration,
         payment: paymentNum,
         currency: 'S/',
+        location,
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 días desde ahora
         posterName: user?.displayName || user?.email?.split('@')[0] || 'Usuario',
-        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        isVerified: false,
-        files: files.map(f => f.name),
       };
 
-      console.log('Nueva tarea:', newTask);
-      console.log('Archivos adjuntos:', files);
+      console.log('📤 Enviando tarea al backend:', payload);
+
+      // Llamar al API
+      const newTask = await createTask(payload);
+      
+      console.log('✅ Tarea creada:', newTask);
+      
+      // TODO: Subir archivos si hay
+      if (files.length > 0) {
+        console.log('📎 Archivos adjuntos (pendiente implementar upload):', files.map(f => f.name));
+      }
       
       setSuccess(true);
       setTitle('');
       setDescription('');
       setPayment('');
+      setLocation('Lima');
       setFiles([]);
       setCategory('Compras');
       setDuration('Menos de 1 hora');
@@ -82,6 +89,7 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
       }, 1500);
       
     } catch (err: any) {
+      console.error('❌ Error al publicar tarea:', err);
       setError(err.message || 'Error al publicar la tarea');
     } finally {
       setLoading(false);
@@ -175,19 +183,19 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
               </div>
 
               <div>
-                <label htmlFor="duration" className="block text-sm font-medium mb-2">
-                  Duración (máx. 1 día)
+                <label htmlFor="location" className="block text-sm font-medium mb-2">
+                  Ubicación
                 </label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger id="duration" className="h-12">
+                <Select value={location} onValueChange={setLocation}>
+                  <SelectTrigger id="location" className="h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Menos de 1 hora">Menos de 1 hora</SelectItem>
-                    <SelectItem value="1-2 horas">1-2 horas</SelectItem>
-                    <SelectItem value="2-4 horas">2-4 horas</SelectItem>
-                    <SelectItem value="4-8 horas">4-8 horas</SelectItem>
-                    <SelectItem value="Todo el día">Todo el día</SelectItem>
+                    <SelectItem value="Lima">Lima</SelectItem>
+                    <SelectItem value="Arequipa">Arequipa</SelectItem>
+                    <SelectItem value="Cusco">Cusco</SelectItem>
+                    <SelectItem value="Trujillo">Trujillo</SelectItem>
+                    <SelectItem value="Remoto">Remoto</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
