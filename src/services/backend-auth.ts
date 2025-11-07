@@ -27,7 +27,9 @@ export async function authenticateWithBackend(firebaseUser: User): Promise<strin
     });
 
     if (!response.ok) {
-      throw new Error('Error al autenticar con el servidor');
+      const errorText = await response.text();
+      console.error('Backend response:', response.status, errorText);
+      throw new Error(`Error al autenticar con el servidor: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();

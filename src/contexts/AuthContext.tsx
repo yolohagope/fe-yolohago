@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log('✅ Usuario autenticado con el backend');
         } catch (error) {
           console.error('❌ Error al autenticar con el backend:', error);
+          console.warn('⚠️ Continuando sin autenticación de backend (modo desarrollo)');
           setBackendAuthenticated(false);
         }
       } else {

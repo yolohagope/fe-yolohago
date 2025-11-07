@@ -434,12 +434,21 @@ export function MuroTareas() {
               <MagnifyingGlass weight="duotone" className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
-              No se encontraron tareas
+              {hasActiveFilters ? 'No se encontraron tareas' : 'No hay tareas publicadas'}
             </h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              No hay tareas que coincidan con tus filtros actuales. 
-              Intenta ajustar los criterios de búsqueda o vuelve más tarde para ver nuevas oportunidades.
+              {hasActiveFilters 
+                ? 'No hay tareas que coincidan con tus filtros actuales. Intenta ajustar los criterios de búsqueda.'
+                : 'Aún no hay tareas publicadas. Sé el primero en publicar una tarea o vuelve más tarde para ver nuevas oportunidades.'}
             </p>
+            {hasActiveFilters && (
+              <button
+                onClick={handleResetFilters}
+                className="mt-4 px-4 py-2 bg-[#4285F4] text-white rounded-md hover:bg-[#4285F4]/90 transition-colors"
+              >
+                Limpiar todos los filtros
+              </button>
+            )}
           </div>
         )}
       </div>
