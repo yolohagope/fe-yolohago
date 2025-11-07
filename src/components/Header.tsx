@@ -1,4 +1,4 @@
-import { SignOut, User } from '@phosphor-icons/react';
+import { SignOut, User, PlusCircle, MagnifyingGlass } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -12,7 +12,12 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { logout } from '@/services/auth';
 
-export function Header() {
+interface HeaderProps {
+  currentView: 'explorar' | 'publicar';
+  onViewChange: (view: 'explorar' | 'publicar') => void;
+}
+
+export function Header({ currentView, onViewChange }: HeaderProps) {
   const { user } = useAuth();
 
   async function handleLogout() {
@@ -37,7 +42,28 @@ export function Header() {
     <header className="border-b border-border bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">YoLoHago</h2>
+          <div className="flex items-center gap-6">
+            <h2 className="text-xl font-bold text-foreground">YoLoHago</h2>
+            
+            <nav className="hidden md:flex gap-2">
+              <Button
+                variant={currentView === 'explorar' ? 'default' : 'ghost'}
+                onClick={() => onViewChange('explorar')}
+                className="gap-2"
+              >
+                <MagnifyingGlass weight="bold" size={18} />
+                Explorar tareas
+              </Button>
+              <Button
+                variant={currentView === 'publicar' ? 'default' : 'ghost'}
+                onClick={() => onViewChange('publicar')}
+                className={`gap-2 ${currentView === 'publicar' ? 'bg-[#4285F4] hover:bg-[#357ae8] text-white' : ''}`}
+              >
+                <PlusCircle weight="bold" size={18} />
+                Publicar tarea
+              </Button>
+            </nav>
+          </div>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -56,6 +82,17 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <div className="md:hidden">
+                <DropdownMenuItem onClick={() => onViewChange('explorar')}>
+                  <MagnifyingGlass className="mr-2 h-4 w-4" />
+                  <span>Explorar tareas</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onViewChange('publicar')}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  <span>Publicar tarea</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </div>
               <DropdownMenuItem>
                 <User className="mr-2 h-4 w-4" />
                 <span>Mi perfil</span>

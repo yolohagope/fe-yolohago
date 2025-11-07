@@ -4,10 +4,12 @@ import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Header } from './components/Header';
 import { MuroTareas } from './components/MuroTareas';
+import { PublicarTarea } from './components/PublicarTarea';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
+  const [currentView, setCurrentView] = useState<'explorar' | 'publicar'>('explorar');
 
   if (loading) {
     return (
@@ -30,8 +32,12 @@ function AppContent() {
 
   return (
     <>
-      <Header />
-      <MuroTareas />
+      <Header currentView={currentView} onViewChange={setCurrentView} />
+      {currentView === 'explorar' ? (
+        <MuroTareas />
+      ) : (
+        <PublicarTarea onSuccess={() => setCurrentView('explorar')} />
+      )}
     </>
   );
 }
