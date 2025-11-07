@@ -1,5 +1,7 @@
+import { MuroTareas } from './components/MuroTareas';
+
 function App() {
-    return <div></div>
+    return <MuroTareas />
 }
 
 export default App
