@@ -116,6 +116,8 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
     throw new Error('No hay token de autenticación');
   }
 
+  console.log('🔑 Usando token:', token.substring(0, 20) + '...');
+
   const headers = {
     ...options.headers,
     'Authorization': `Token ${token}`,
@@ -126,6 +128,15 @@ export async function authenticatedFetch(endpoint: string, options: RequestInit 
     ...options,
     headers
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Error en petición autenticada:', {
+      endpoint,
+      status: response.status,
+      error: errorText
+    });
+  }
 
   return response;
 }
