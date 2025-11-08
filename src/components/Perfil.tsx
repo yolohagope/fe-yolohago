@@ -483,7 +483,7 @@ function Finanzas() {
     );
   }
 
-  const saldoDisponible = balance.available_amount_pen;
+  const saldoDisponible = parseFloat(String(balance.available_amount_pen)) || 0;
   
   // Separar transacciones de pagos y retiros
   const movimientos = transactions.filter(t => t.transaction_type === 'payment' || t.transaction_type === 'refund');
@@ -561,7 +561,7 @@ function Finanzas() {
               </div>
             ) : (
               movimientos.map((transaction) => {
-                const isIncome = transaction.signed_amount > 0;
+                const isIncome = parseFloat(String(transaction.signed_amount)) > 0;
                 return (
                   <div
                     key={transaction.id}
@@ -595,7 +595,7 @@ function Finanzas() {
                           isIncome ? 'text-green-600' : 'text-red-600'
                         }`}
                       >
-                        {isIncome ? '+' : ''}S/ {Math.abs(transaction.amount).toFixed(2)}
+                        {isIncome ? '+' : ''}S/ {Math.abs(parseFloat(String(transaction.amount)) || 0).toFixed(2)}
                       </p>
                       {getStatusBadge(transaction.status)}
                     </div>
@@ -640,7 +640,7 @@ function Finanzas() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-foreground">S/ {transaction.amount.toFixed(2)}</p>
+                      <p className="font-bold text-foreground">S/ {parseFloat(String(transaction.amount)).toFixed(2)}</p>
                       {getStatusBadge(transaction.status)}
                     </div>
                   </div>

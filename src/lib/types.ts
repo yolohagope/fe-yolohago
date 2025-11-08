@@ -54,10 +54,11 @@ export interface Balance {
   id: number;
   user: number;
   user_name: string;
-  available_amount_pen: number;
-  available_amount_usd: number;
-  pending_amount_pen: number;
-  pending_amount_usd: number;
+  user_email: string; // Campo adicional del API
+  available_amount_pen: string; // API devuelve string desde DecimalField
+  available_amount_usd: string;
+  pending_amount_pen: string;
+  pending_amount_usd: string;
   updated_at: string;
 }
 
@@ -67,8 +68,8 @@ export interface Transaction {
   user: number;
   user_name: string;
   transaction_type: 'payment' | 'withdrawal' | 'refund' | 'fee';
-  amount: number;
-  signed_amount: number;
+  amount: string; // API devuelve string desde DecimalField
+  signed_amount: string; // API devuelve string
   currency: 'PEN' | 'USD';
   status: 'pending' | 'completed' | 'failed' | 'cancelled';
   contract: number | null;
