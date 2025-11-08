@@ -748,10 +748,19 @@ function MetodosCobro() {
       setLoading(true);
       setError(null);
       const data = await fetchPaymentMethods();
-      setPaymentMethods(data);
+      
+      // Asegurar que siempre sea un array
+      if (Array.isArray(data)) {
+        setPaymentMethods(data);
+      } else {
+        console.error('fetchPaymentMethods no devolvió un array:', data);
+        setPaymentMethods([]);
+        setError('Formato de respuesta inesperado');
+      }
     } catch (err: any) {
       console.error('Error loading payment methods:', err);
       setError(err.message || 'Error al cargar métodos de cobro');
+      setPaymentMethods([]); // Asegurar que sea array vacío en caso de error
     } finally {
       setLoading(false);
     }

@@ -461,18 +461,30 @@ export async function deleteProfilePhoto(): Promise<void> {
 export async function fetchBalance(): Promise<Balance> {
   try {
     const user = auth.currentUser;
+    
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+    
+    console.log('📊 Obteniendo balance del usuario...');
+    
     const response = await authenticatedFetch(user, '/transactions/balance/', {
       method: 'GET'
     });
     
+    console.log('📊 Response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Error al cargar balance: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Error response:', errorText);
+      throw new Error(`Error al cargar balance: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('✅ Balance obtenido:', data);
     return data;
   } catch (error: any) {
-    console.error('Error fetching balance:', error);
+    console.error('❌ Error fetching balance:', error);
     
     if (error.name === 'AuthenticationError') {
       await auth.signOut();
@@ -493,6 +505,10 @@ export async function fetchTransactions(params?: {
   try {
     const user = auth.currentUser;
     
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+    
     // Construir query params
     const queryParams = new URLSearchParams();
     if (params?.transaction_type) queryParams.append('transaction_type', params.transaction_type);
@@ -501,18 +517,47 @@ export async function fetchTransactions(params?: {
     
     const url = `/transactions/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
+    console.log('📋 Obteniendo transacciones:', url);
+    
     const response = await authenticatedFetch(user, url, {
       method: 'GET'
     });
     
+    console.log('📋 Response status:', response.status);
+    
     if (!response.ok) {
-      throw new Error(`Error al cargar transacciones: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ Error response:', errorText);
+      throw new Error(`Error al cargar transacciones: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('✅ Transacciones obtenidas:', data);
+    
+    // Validar que tenga la estructura esperada
+    if (!data.results || !Array.isArray(data.results)) {
+      console.warn('⚠️ Respuesta sin formato paginado esperado:', data);
+      // Si no tiene results, asumir que es un array directo
+      if (Array.isArray(data)) {
+        return {
+          count: data.length,
+          next: null,
+          previous: null,
+          results: data
+        };
+      }
+      // Si no es array, devolver vacío
+      return {
+        count: 0,
+        next: null,
+        previous: null,
+        results: []
+      };
+    }
+    
     return data;
   } catch (error: any) {
-    console.error('Error fetching transactions:', error);
+    console.error('❌ Error fetching transactions:', error);
     
     if (error.name === 'AuthenticationError') {
       await auth.signOut();
@@ -537,7 +582,20 @@ export async function fetchPaymentMethods(): Promise<PaymentMethod[]> {
     }
     
     const data = await response.json();
-    return data;
+    
+    // Asegurarse de que devolvemos un array
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // Si la respuesta tiene una propiedad 'results' (paginación)
+    if (data.results && Array.isArray(data.results)) {
+      return data.results;
+    }
+    
+    // Si es un objeto vacío o null, devolver array vacío
+    console.warn('fetchPaymentMethods: respuesta inesperada', data);
+    return [];
   } catch (error: any) {
     console.error('Error fetching payment methods:', error);
     
