@@ -9,13 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
-import { fetchProfile, updateProfile, deleteProfilePhoto, fetchBalance, fetchTransactions, fetchPaymentMethods, setPaymentMethodPrimary, activatePaymentMethod, deactivatePaymentMethod, deletePaymentMethod } from '@/services/api';
-import { UserProfile, Balance, Transaction, PaymentMethod } from '@/lib/types';
+import { fetchProfile, updateProfile, deleteProfilePhoto, fetchBalance, fetchTransactions, fetchPaymentMethods, setPaymentMethodPrimary, activatePaymentMethod, deactivatePaymentMethod, deletePaymentMethod, createBankAccount, createYapePlin, createPayPal } from '@/services/api';
+import { UserProfile, Balance, Transaction, PaymentMethod, CreateBankAccountPayload, CreateYapePlinPayload, CreatePayPalPayload } from '@/lib/types';
 import { sendPasswordResetEmail, EmailAuthProvider, linkWithCredential, updatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Section = 'datos-personales' | 'finanzas' | 'metodos-pago' | 'metodos-cobro' | 'seguridad';
 
@@ -690,6 +691,53 @@ function MetodosCobro() {
   const [error, setError] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [selectedMethodType, setSelectedMethodType] = useState<'bank' | 'yape' | 'plin' | 'paypal' | null>(null);
+  const [submitLoading, setSubmitLoading] = useState(false);
+
+  // Form states para cuenta bancaria
+  const [bankForm, setBankForm] = useState({
+    bank_name: '',
+    account_number: '',
+    account_type: 'savings' as 'savings' | 'checking',
+    account_holder_name: '',
+    account_holder_dni: '',
+    currency: 'PEN' as 'PEN' | 'USD',
+    display_name: ''
+  });
+
+  // Form states para Yape/Plin
+  const [yapePlinForm, setYapePlinForm] = useState({
+    wallet_type: 'yape' as 'yape' | 'plin',
+    phone_number: '',
+    account_holder_name: '',
+    display_name: ''
+  });
+
+  // Form states para PayPal
+  const [paypalForm, setPaypalForm] = useState({
+    account_email: '',
+    account_holder_name: '',
+    display_name: ''
+  });
+
+  const peruBanks = [
+    'BCP',
+    'BBVA',
+    'Interbank',
+    'Scotiabank',
+    'BanBif',
+    'Banco Pichincha',
+    'Banco de la Nación',
+    'Banco de Comercio',
+    'Banco Falabella',
+    'Banco Ripley',
+    'Banco Azteca',
+    'Citibank',
+    'ICBC',
+    'Mibanco',
+    'Alfin Banco',
+    'Banco GNB'
+  ];
 
   useEffect(() => {
     loadPaymentMethods();
@@ -706,6 +754,133 @@ function MetodosCobro() {
       setError(err.message || 'Error al cargar métodos de cobro');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function resetForms() {
+    setBankForm({
+      bank_name: '',
+      account_number: '',
+      account_type: 'savings',
+      account_holder_name: '',
+      account_holder_dni: '',
+      currency: 'PEN',
+      display_name: ''
+    });
+    setYapePlinForm({
+      wallet_type: 'yape',
+      phone_number: '',
+      account_holder_name: '',
+      display_name: ''
+    });
+    setPaypalForm({
+      account_email: '',
+      account_holder_name: '',
+      display_name: ''
+    });
+  }
+
+  function handleOpenDialog() {
+    resetForms();
+    setSelectedMethodType(null);
+    setShowAddDialog(true);
+  }
+
+  async function handleSubmitBankAccount(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!bankForm.bank_name || !bankForm.account_number || !bankForm.account_holder_name || !bankForm.account_holder_dni) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      const payload: CreateBankAccountPayload = {
+        method_type: 'bank_account',
+        bank_name: bankForm.bank_name,
+        account_number: bankForm.account_number,
+        account_type: bankForm.account_type,
+        account_holder_name: bankForm.account_holder_name,
+        account_holder_dni: bankForm.account_holder_dni,
+        currency: bankForm.currency,
+        display_name: bankForm.display_name || `${bankForm.bank_name} - ${bankForm.account_number.slice(-4)}`
+      };
+      
+      await createBankAccount(payload);
+      await loadPaymentMethods();
+      setShowAddDialog(false);
+      resetForms();
+    } catch (err: any) {
+      console.error('Error creating bank account:', err);
+      alert(err.message || 'Error al agregar cuenta bancaria');
+    } finally {
+      setSubmitLoading(false);
+    }
+  }
+
+  async function handleSubmitYapePlin(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!yapePlinForm.phone_number || !yapePlinForm.account_holder_name) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      const walletType = selectedMethodType as 'yape' | 'plin';
+      const payload: CreateYapePlinPayload = {
+        method_type: walletType,
+        wallet_type: walletType,
+        phone_number: yapePlinForm.phone_number,
+        account_holder_name: yapePlinForm.account_holder_name,
+        display_name: yapePlinForm.display_name || `${walletType.toUpperCase()} - ${yapePlinForm.phone_number.slice(-4)}`,
+        currency: 'PEN',
+        identifier: yapePlinForm.phone_number
+      };
+      
+      await createYapePlin(payload);
+      await loadPaymentMethods();
+      setShowAddDialog(false);
+      resetForms();
+    } catch (err: any) {
+      console.error('Error creating Yape/Plin:', err);
+      alert(err.message || 'Error al agregar método de pago');
+    } finally {
+      setSubmitLoading(false);
+    }
+  }
+
+  async function handleSubmitPayPal(e: React.FormEvent) {
+    e.preventDefault();
+    
+    if (!paypalForm.account_email || !paypalForm.account_holder_name) {
+      alert('Por favor completa todos los campos obligatorios');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      const payload: CreatePayPalPayload = {
+        method_type: 'paypal',
+        wallet_type: 'paypal',
+        account_email: paypalForm.account_email,
+        account_holder_name: paypalForm.account_holder_name,
+        display_name: paypalForm.display_name || `PayPal - ${paypalForm.account_email}`,
+        currency: 'USD',
+        identifier: paypalForm.account_email
+      };
+      
+      await createPayPal(payload);
+      await loadPaymentMethods();
+      setShowAddDialog(false);
+      resetForms();
+    } catch (err: any) {
+      console.error('Error creating PayPal:', err);
+      alert(err.message || 'Error al agregar PayPal');
+    } finally {
+      setSubmitLoading(false);
     }
   }
 
@@ -751,7 +926,7 @@ function MetodosCobro() {
     }
 
     const confirmed = window.confirm(
-      `¿Estás seguro de eliminar ${method.display_info.display_name}?`
+      `¿Estás seguro de eliminar ${method.display_name}?`
     );
     
     if (!confirmed) return;
@@ -827,8 +1002,8 @@ function MetodosCobro() {
           </p>
         </div>
         <Button 
-          onClick={() => setShowAddDialog(true)}
-          className="bg-[#34A853] hover:bg-[#2d9548]"
+          onClick={handleOpenDialog}
+          className="bg-[#34A853] hover:bg-[#2d9548] cursor-pointer"
         >
           <Plus weight="bold" className="mr-2" size={18} />
           Agregar método
@@ -843,8 +1018,8 @@ function MetodosCobro() {
             Agrega un método de pago para poder solicitar retiros
           </p>
           <Button 
-            onClick={() => setShowAddDialog(true)}
-            className="bg-[#34A853] hover:bg-[#2d9548]"
+            onClick={handleOpenDialog}
+            className="bg-[#34A853] hover:bg-[#2d9548] cursor-pointer"
           >
             <Wallet weight="bold" className="mr-2" size={18} />
             Agregar método
@@ -863,7 +1038,7 @@ function MetodosCobro() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold">
-                        {method.display_info.display_name}
+                        {method.display_name}
                       </h3>
                       {method.is_primary && (
                         <Badge variant="default" className="bg-yellow-500">
@@ -887,7 +1062,7 @@ function MetodosCobro() {
                     </p>
                     
                     <p className="text-sm font-mono text-muted-foreground">
-                      {method.display_info.masked_identifier}
+                      {method.masked_identifier}
                     </p>
                     
                     <p className="text-xs text-muted-foreground mt-2">
@@ -947,18 +1122,352 @@ function MetodosCobro() {
         </div>
       )}
 
-      {/* TODO: Dialog para agregar método */}
+      {/* Dialog para agregar método */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Agregar Método de Cobro</DialogTitle>
             <DialogDescription>
-              Los formularios para agregar métodos de pago se implementarán próximamente.
+              Selecciona el tipo de método de pago que deseas agregar
             </DialogDescription>
           </DialogHeader>
-          <div className="py-6 text-center text-muted-foreground">
-            Funcionalidad en desarrollo
-          </div>
+
+          {!selectedMethodType ? (
+            <div className="grid grid-cols-2 gap-4 py-6">
+              <Button
+                variant="outline"
+                className="h-32 flex flex-col gap-3 cursor-pointer hover:bg-primary/10 hover:border-primary"
+                onClick={() => setSelectedMethodType('bank')}
+              >
+                <Bank size={32} />
+                <span className="font-semibold">Cuenta Bancaria</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-32 flex flex-col gap-3 cursor-pointer hover:bg-primary/10 hover:border-primary"
+                onClick={() => setSelectedMethodType('yape')}
+              >
+                <Wallet size={32} />
+                <span className="font-semibold">Yape</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-32 flex flex-col gap-3 cursor-pointer hover:bg-primary/10 hover:border-primary"
+                onClick={() => setSelectedMethodType('plin')}
+              >
+                <Wallet size={32} />
+                <span className="font-semibold">Plin</span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="h-32 flex flex-col gap-3 cursor-pointer hover:bg-primary/10 hover:border-primary"
+                onClick={() => setSelectedMethodType('paypal')}
+              >
+                <CreditCard size={32} />
+                <span className="font-semibold">PayPal</span>
+              </Button>
+            </div>
+          ) : selectedMethodType === 'bank' ? (
+            <form onSubmit={handleSubmitBankAccount} className="space-y-4 py-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedMethodType(null)}
+                  className="cursor-pointer"
+                >
+                  ← Volver
+                </Button>
+                <h3 className="font-semibold">Cuenta Bancaria</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bank_name">Banco *</Label>
+                <Select
+                  value={bankForm.bank_name}
+                  onValueChange={(value) => setBankForm({ ...bankForm, bank_name: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un banco" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {peruBanks.map(bank => (
+                      <SelectItem key={bank} value={bank}>{bank}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="account_number">Número de cuenta *</Label>
+                <Input
+                  id="account_number"
+                  value={bankForm.account_number}
+                  onChange={(e) => setBankForm({ ...bankForm, account_number: e.target.value })}
+                  placeholder="1234567890"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="account_type">Tipo de cuenta *</Label>
+                <Select
+                  value={bankForm.account_type}
+                  onValueChange={(value) => setBankForm({ ...bankForm, account_type: value as 'savings' | 'checking' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo de cuenta" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="savings">Ahorros</SelectItem>
+                    <SelectItem value="checking">Corriente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="account_holder_name">Titular de la cuenta *</Label>
+                <Input
+                  id="account_holder_name"
+                  value={bankForm.account_holder_name}
+                  onChange={(e) => setBankForm({ ...bankForm, account_holder_name: e.target.value })}
+                  placeholder="Nombre completo"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="account_holder_dni">DNI del titular *</Label>
+                <Input
+                  id="account_holder_dni"
+                  value={bankForm.account_holder_dni}
+                  onChange={(e) => setBankForm({ ...bankForm, account_holder_dni: e.target.value })}
+                  placeholder="12345678"
+                  maxLength={8}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="currency">Moneda *</Label>
+                <Select
+                  value={bankForm.currency}
+                  onValueChange={(value) => setBankForm({ ...bankForm, currency: value as 'PEN' | 'USD' })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Moneda" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PEN">Soles (PEN)</SelectItem>
+                    <SelectItem value="USD">Dólares (USD)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Nombre para mostrar (opcional)</Label>
+                <Input
+                  id="display_name"
+                  value={bankForm.display_name}
+                  onChange={(e) => setBankForm({ ...bankForm, display_name: e.target.value })}
+                  placeholder="Ej: Mi cuenta BCP"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Si no lo ingresas, se generará automáticamente
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddDialog(false)}
+                  disabled={submitLoading}
+                  className="flex-1 cursor-pointer"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitLoading}
+                  className="flex-1 bg-[#34A853] hover:bg-[#2d9548] cursor-pointer"
+                >
+                  {submitLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  ) : (
+                    'Agregar cuenta'
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : selectedMethodType === 'yape' || selectedMethodType === 'plin' ? (
+            <form onSubmit={handleSubmitYapePlin} className="space-y-4 py-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedMethodType(null)}
+                  className="cursor-pointer"
+                >
+                  ← Volver
+                </Button>
+                <h3 className="font-semibold">{selectedMethodType === 'yape' ? 'Yape' : 'Plin'}</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone_number">Número de celular *</Label>
+                <Input
+                  id="phone_number"
+                  value={yapePlinForm.phone_number}
+                  onChange={(e) => {
+                    setYapePlinForm({ 
+                      ...yapePlinForm, 
+                      phone_number: e.target.value,
+                      wallet_type: selectedMethodType as 'yape' | 'plin'
+                    });
+                  }}
+                  placeholder="987654321"
+                  maxLength={9}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Número asociado a tu cuenta {selectedMethodType === 'yape' ? 'Yape' : 'Plin'}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="yape_plin_holder_name">Titular de la cuenta *</Label>
+                <Input
+                  id="yape_plin_holder_name"
+                  value={yapePlinForm.account_holder_name}
+                  onChange={(e) => setYapePlinForm({ ...yapePlinForm, account_holder_name: e.target.value })}
+                  placeholder="Nombre completo"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="yape_plin_display_name">Nombre para mostrar (opcional)</Label>
+                <Input
+                  id="yape_plin_display_name"
+                  value={yapePlinForm.display_name}
+                  onChange={(e) => setYapePlinForm({ ...yapePlinForm, display_name: e.target.value })}
+                  placeholder={`Ej: Mi ${selectedMethodType === 'yape' ? 'Yape' : 'Plin'}`}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Si no lo ingresas, se generará automáticamente
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddDialog(false)}
+                  disabled={submitLoading}
+                  className="flex-1 cursor-pointer"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitLoading}
+                  className="flex-1 bg-[#34A853] hover:bg-[#2d9548] cursor-pointer"
+                >
+                  {submitLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  ) : (
+                    `Agregar ${selectedMethodType === 'yape' ? 'Yape' : 'Plin'}`
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : selectedMethodType === 'paypal' ? (
+            <form onSubmit={handleSubmitPayPal} className="space-y-4 py-4">
+              <div className="flex items-center gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedMethodType(null)}
+                  className="cursor-pointer"
+                >
+                  ← Volver
+                </Button>
+                <h3 className="font-semibold">PayPal</h3>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="account_email">Correo de PayPal *</Label>
+                <Input
+                  id="account_email"
+                  type="email"
+                  value={paypalForm.account_email}
+                  onChange={(e) => setPaypalForm({ ...paypalForm, account_email: e.target.value })}
+                  placeholder="tu@email.com"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="paypal_holder_name">Titular de la cuenta *</Label>
+                <Input
+                  id="paypal_holder_name"
+                  value={paypalForm.account_holder_name}
+                  onChange={(e) => setPaypalForm({ ...paypalForm, account_holder_name: e.target.value })}
+                  placeholder="Nombre completo"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="paypal_display_name">Nombre para mostrar (opcional)</Label>
+                <Input
+                  id="paypal_display_name"
+                  value={paypalForm.display_name}
+                  onChange={(e) => setPaypalForm({ ...paypalForm, display_name: e.target.value })}
+                  placeholder="Ej: Mi PayPal"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Si no lo ingresas, se generará automáticamente
+                </p>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <p className="text-sm text-blue-800">
+                  💡 Los retiros a PayPal solo están disponibles en USD
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddDialog(false)}
+                  disabled={submitLoading}
+                  className="flex-1 cursor-pointer"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={submitLoading}
+                  className="flex-1 bg-[#34A853] hover:bg-[#2d9548] cursor-pointer"
+                >
+                  {submitLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  ) : (
+                    'Agregar PayPal'
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : null}
         </DialogContent>
       </Dialog>
     </Card>
