@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, CreditCard, Wallet, Lock, Camera, Star, ArrowUp, ArrowDown, Bank } from '@phosphor-icons/react';
+import { User, CreditCard, Wallet, Lock, Camera, Star, ArrowUp, ArrowDown, Bank, X, Plus, Check } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,11 +9,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { Separator } from '@/components/ui/separator';
-import { fetchProfile, updateProfile, deleteProfilePhoto } from '@/services/api';
-import { UserProfile } from '@/lib/types';
+import { fetchProfile, updateProfile, deleteProfilePhoto, fetchBalance, fetchTransactions, fetchPaymentMethods, setPaymentMethodPrimary, activatePaymentMethod, deactivatePaymentMethod, deletePaymentMethod } from '@/services/api';
+import { UserProfile, Balance, Transaction, PaymentMethod } from '@/lib/types';
 import { sendPasswordResetEmail, EmailAuthProvider, linkWithCredential, updatePassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type Section = 'datos-personales' | 'finanzas' | 'metodos-pago' | 'metodos-cobro' | 'seguridad';
 
@@ -426,22 +428,85 @@ function DatosPersonales({ profile, onUpdate }: { profile: UserProfile | null; o
 }
 
 function Finanzas() {
-  // Datos de ejemplo - en producción vendrían del backend
-  const saldoDisponible: number = 1250.50;
-  const movimientos = [
-    { id: 1, fecha: '2025-11-08', concepto: 'Pago recibido por tarea realizada', monto: 150.00, tipo: 'ingreso', estado: 'completado' },
-    { id: 2, fecha: '2025-11-07', concepto: 'Pago por servicio', monto: -80.00, tipo: 'egreso', estado: 'completado' },
-    { id: 3, fecha: '2025-11-06', concepto: 'Cobro de tarea completada', monto: 200.00, tipo: 'ingreso', estado: 'completado' },
-    { id: 4, fecha: '2025-11-05', concepto: 'Retiro a cuenta bancaria', monto: -300.00, tipo: 'egreso', estado: 'procesando' },
-    { id: 5, fecha: '2025-11-04', concepto: 'Pago recibido por tarea realizada', monto: 95.00, tipo: 'ingreso', estado: 'completado' },
-    { id: 6, fecha: '2025-11-03', concepto: 'Pago por servicio', monto: -120.00, tipo: 'egreso', estado: 'completado' },
-  ];
+  const [balance, setBalance] = useState<Balance | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const retiros = [
-    { id: 1, fecha: '2025-11-05', monto: 300.00, cuenta: '**** 1234', banco: 'BCP', estado: 'procesando' },
-    { id: 2, fecha: '2025-10-28', monto: 500.00, cuenta: '**** 1234', banco: 'BCP', estado: 'completado' },
-    { id: 3, fecha: '2025-10-15', monto: 250.00, cuenta: '**** 1234', banco: 'BCP', estado: 'completado' },
-  ];
+  useEffect(() => {
+    async function loadFinancialData() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Cargar balance y transacciones en paralelo
+        const [balanceData, transactionsData] = await Promise.all([
+          fetchBalance(),
+          fetchTransactions()
+        ]);
+        
+        setBalance(balanceData);
+        setTransactions(transactionsData.results);
+      } catch (err: any) {
+        console.error('Error cargando datos financieros:', err);
+        setError(err.message || 'Error al cargar datos financieros');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFinancialData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Cargando datos financieros...</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error || !balance) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-12">
+          <p className="text-red-600 mb-4">{error || 'Error al cargar datos'}</p>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
+        </div>
+      </Card>
+    );
+  }
+
+  const saldoDisponible = balance.available_amount_pen;
+  
+  // Separar transacciones de pagos y retiros
+  const movimientos = transactions.filter(t => t.transaction_type === 'payment' || t.transaction_type === 'refund');
+  const retiros = transactions.filter(t => t.transaction_type === 'withdrawal');
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-PE', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit' 
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      completed: { label: 'Completado', color: 'bg-green-100 text-green-700' },
+      pending: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-700' },
+      failed: { label: 'Fallido', color: 'bg-red-100 text-red-700' },
+      cancelled: { label: 'Cancelado', color: 'bg-gray-100 text-gray-700' }
+    };
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return <span className={`text-xs px-2 py-1 rounded-full ${config.color}`}>{config.label}</span>;
+  };
 
   return (
     <Card className="p-6">
@@ -489,78 +554,98 @@ function Finanzas() {
         {/* Tab de Movimientos */}
         <TabsContent value="movimientos" className="mt-4">
           <div className="space-y-3">
-            {movimientos.map((mov) => (
-              <div
-                key={mov.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      mov.tipo === 'ingreso'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-red-100 text-red-600'
-                    }`}
-                  >
-                    {mov.tipo === 'ingreso' ? (
-                      <ArrowDown weight="bold" size={20} />
-                    ) : (
-                      <ArrowUp weight="bold" size={20} />
-                    )}
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{mov.concepto}</p>
-                    <p className="text-xs text-muted-foreground">{mov.fecha}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p
-                    className={`font-bold ${
-                      mov.tipo === 'ingreso' ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {mov.tipo === 'ingreso' ? '+' : ''}S/ {Math.abs(mov.monto).toFixed(2)}
-                  </p>
-                  <p className="text-xs text-muted-foreground capitalize">{mov.estado}</p>
-                </div>
+            {movimientos.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No tienes movimientos registrados
               </div>
-            ))}
+            ) : (
+              movimientos.map((transaction) => {
+                const isIncome = transaction.signed_amount > 0;
+                return (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isIncome
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-red-100 text-red-600'
+                        }`}
+                      >
+                        {isIncome ? (
+                          <ArrowDown weight="bold" size={20} />
+                        ) : (
+                          <ArrowUp weight="bold" size={20} />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{transaction.description}</p>
+                        {transaction.task_title && (
+                          <p className="text-xs text-muted-foreground">{transaction.task_title}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">{formatDate(transaction.created_at)}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`font-bold ${
+                          isIncome ? 'text-green-600' : 'text-red-600'
+                        }`}
+                      >
+                        {isIncome ? '+' : ''}S/ {Math.abs(transaction.amount).toFixed(2)}
+                      </p>
+                      {getStatusBadge(transaction.status)}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </TabsContent>
 
         {/* Tab de Retiros */}
         <TabsContent value="retiros" className="mt-4">
           <div className="space-y-3">
-            {retiros.map((retiro) => (
-              <div
-                key={retiro.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                    <Bank weight="bold" size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{retiro.banco} {retiro.cuenta}</p>
-                    <p className="text-xs text-muted-foreground">{retiro.fecha}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-foreground">S/ {retiro.monto.toFixed(2)}</p>
-                  <p
-                    className={`text-xs capitalize ${
-                      retiro.estado === 'completado'
-                        ? 'text-green-600'
-                        : retiro.estado === 'procesando'
-                        ? 'text-yellow-600'
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    {retiro.estado}
-                  </p>
-                </div>
+            {retiros.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No tienes retiros registrados
               </div>
-            ))}
+            ) : (
+              retiros.map((transaction) => {
+                const bankName = transaction.metadata?.bank_name || 'Banco';
+                const accountNumber = transaction.metadata?.account_number || 'N/A';
+                // Mostrar solo los últimos 4 dígitos
+                const maskedAccount = accountNumber.length > 4 
+                  ? `**** ${accountNumber.slice(-4)}` 
+                  : accountNumber;
+                
+                return (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <Bank weight="bold" size={20} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{bankName} {maskedAccount}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(transaction.created_at)}</p>
+                        {transaction.notes && (
+                          <p className="text-xs text-muted-foreground italic">{transaction.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-foreground">S/ {transaction.amount.toFixed(2)}</p>
+                      {getStatusBadge(transaction.status)}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </TabsContent>
       </Tabs>
@@ -600,32 +685,282 @@ function MetodosPago() {
 }
 
 function MetodosCobro() {
-  const [accounts, setAccounts] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, []);
+
+  async function loadPaymentMethods() {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchPaymentMethods();
+      setPaymentMethods(data);
+    } catch (err: any) {
+      console.error('Error loading payment methods:', err);
+      setError(err.message || 'Error al cargar métodos de cobro');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSetPrimary(id: number) {
+    try {
+      setActionLoading(id);
+      await setPaymentMethodPrimary(id);
+      await loadPaymentMethods();
+    } catch (err: any) {
+      console.error('Error setting primary:', err);
+      alert(err.message || 'Error al marcar como principal');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleToggleActive(method: PaymentMethod) {
+    if (method.is_primary && method.is_active) {
+      alert('No puedes desactivar el método principal. Marca otro como principal primero.');
+      return;
+    }
+
+    try {
+      setActionLoading(method.id);
+      if (method.is_active) {
+        await deactivatePaymentMethod(method.id);
+      } else {
+        await activatePaymentMethod(method.id);
+      }
+      await loadPaymentMethods();
+    } catch (err: any) {
+      console.error('Error toggling active:', err);
+      alert(err.message || 'Error al cambiar estado');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleDelete(method: PaymentMethod) {
+    if (method.is_primary) {
+      alert('No puedes eliminar el método principal. Marca otro como principal primero.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Estás seguro de eliminar ${method.display_info.display_name}?`
+    );
+    
+    if (!confirmed) return;
+
+    try {
+      setActionLoading(method.id);
+      await deletePaymentMethod(method.id);
+      await loadPaymentMethods();
+    } catch (err: any) {
+      console.error('Error deleting:', err);
+      alert(err.message || 'Error al eliminar método');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  function getMethodIcon(type: string) {
+    switch (type) {
+      case 'bank_account':
+        return <Bank weight="fill" size={24} />;
+      case 'yape':
+      case 'plin':
+        return <Wallet weight="fill" size={24} />;
+      case 'paypal':
+        return <CreditCard weight="fill" size={24} />;
+      default:
+        return <Wallet weight="fill" size={24} />;
+    }
+  }
+
+  function getMethodTypeLabel(type: string) {
+    const labels: Record<string, string> = {
+      bank_account: 'Cuenta Bancaria',
+      yape: 'Yape',
+      plin: 'Plin',
+      paypal: 'PayPal',
+      wallet: 'Billetera'
+    };
+    return labels[type] || type;
+  }
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando métodos de cobro...</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center py-12">
+          <p className="text-destructive mb-4">{error}</p>
+          <Button onClick={loadPaymentMethods} variant="outline">
+            Reintentar
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
-      <h2 className="text-2xl font-bold mb-2">Métodos de Cobro</h2>
-      <p className="text-muted-foreground mb-6">
-        Configura tus cuentas bancarias para recibir pagos por tus servicios
-      </p>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">Métodos de Cobro</h2>
+          <p className="text-muted-foreground">
+            Configura tus métodos de pago para recibir retiros
+          </p>
+        </div>
+        <Button 
+          onClick={() => setShowAddDialog(true)}
+          className="bg-[#34A853] hover:bg-[#2d9548]"
+        >
+          <Plus weight="bold" className="mr-2" size={18} />
+          Agregar método
+        </Button>
+      </div>
 
-      {accounts.length === 0 ? (
+      {paymentMethods.length === 0 ? (
         <div className="text-center py-12">
           <Wallet weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
           <h3 className="text-lg font-semibold mb-2">No tienes métodos de cobro</h3>
           <p className="text-muted-foreground mb-6">
-            Agrega una cuenta bancaria para recibir tus pagos
+            Agrega un método de pago para poder solicitar retiros
           </p>
-          <Button className="bg-[#34A853] hover:bg-[#2d9548]">
+          <Button 
+            onClick={() => setShowAddDialog(true)}
+            className="bg-[#34A853] hover:bg-[#2d9548]"
+          >
             <Wallet weight="bold" className="mr-2" size={18} />
-            Agregar cuenta bancaria
+            Agregar método
           </Button>
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Lista de cuentas */}
+          {paymentMethods.map(method => (
+            <Card key={method.id} className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                    {getMethodIcon(method.method_type)}
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold">
+                        {method.display_info.display_name}
+                      </h3>
+                      {method.is_primary && (
+                        <Badge variant="default" className="bg-yellow-500">
+                          <Star weight="fill" size={12} className="mr-1" />
+                          Principal
+                        </Badge>
+                      )}
+                      {method.is_verified && (
+                        <Badge variant="default" className="bg-green-500">
+                          <Check weight="bold" size={12} className="mr-1" />
+                          Verificado
+                        </Badge>
+                      )}
+                      {!method.is_active && (
+                        <Badge variant="secondary">Inactivo</Badge>
+                      )}
+                    </div>
+                    
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {getMethodTypeLabel(method.method_type)}
+                    </p>
+                    
+                    <p className="text-sm font-mono text-muted-foreground">
+                      {method.display_info.masked_identifier}
+                    </p>
+                    
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Moneda: {method.currency}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 ml-4">
+                  {!method.is_primary && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSetPrimary(method.id)}
+                      disabled={actionLoading === method.id}
+                      className="cursor-pointer"
+                    >
+                      {actionLoading === method.id ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                      ) : (
+                        <>
+                          <Star size={14} className="mr-1" />
+                          Marcar principal
+                        </>
+                      )}
+                    </Button>
+                  )}
+                  
+                  {!method.is_primary && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleToggleActive(method)}
+                      disabled={actionLoading === method.id}
+                      className="cursor-pointer"
+                    >
+                      {method.is_active ? 'Desactivar' : 'Activar'}
+                    </Button>
+                  )}
+                  
+                  {!method.is_primary && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleDelete(method)}
+                      disabled={actionLoading === method.id}
+                      className="cursor-pointer"
+                    >
+                      <X size={14} className="mr-1" />
+                      Eliminar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
+
+      {/* TODO: Dialog para agregar método */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Agregar Método de Cobro</DialogTitle>
+            <DialogDescription>
+              Los formularios para agregar métodos de pago se implementarán próximamente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 text-center text-muted-foreground">
+            Funcionalidad en desarrollo
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

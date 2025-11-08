@@ -1,4 +1,18 @@
-import { Task, Category, UserProfile, UpdateProfilePayload } from '@/lib/types';
+import { 
+  Task, 
+  Category, 
+  UserProfile, 
+  UpdateProfilePayload, 
+  Balance, 
+  Transaction, 
+  TransactionsResponse,
+  PaymentMethod,
+  CreateBankAccountPayload,
+  CreateYapePlinPayload,
+  CreatePayPalPayload,
+  WithdrawalRequest,
+  CreateWithdrawalPayload
+} from '@/lib/types';
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
 
@@ -432,6 +446,335 @@ export async function deleteProfilePhoto(): Promise<void> {
     }
   } catch (error: any) {
     console.error('Error deleting profile photo:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener el balance del usuario
+ */
+export async function fetchBalance(): Promise<Balance> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/transactions/balance/', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al cargar balance: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching balance:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener las transacciones del usuario
+ */
+export async function fetchTransactions(params?: {
+  transaction_type?: 'payment' | 'withdrawal' | 'refund' | 'fee';
+  status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+  page?: number;
+}): Promise<TransactionsResponse> {
+  try {
+    const user = auth.currentUser;
+    
+    // Construir query params
+    const queryParams = new URLSearchParams();
+    if (params?.transaction_type) queryParams.append('transaction_type', params.transaction_type);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    
+    const url = `/transactions/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    const response = await authenticatedFetch(user, url, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al cargar transacciones: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching transactions:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener todos los métodos de pago del usuario
+ */
+export async function fetchPaymentMethods(): Promise<PaymentMethod[]> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/payment-methods/', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al cargar métodos de pago: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching payment methods:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Crear un nuevo método de pago (cuenta bancaria)
+ */
+export async function createBankAccount(payload: CreateBankAccountPayload): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/payment-methods/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al crear cuenta bancaria');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error creating bank account:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Crear un nuevo método de pago (Yape/Plin)
+ */
+export async function createYapePlin(payload: CreateYapePlinPayload): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/payment-methods/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al crear método de pago');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error creating Yape/Plin:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Crear un nuevo método de pago (PayPal)
+ */
+export async function createPayPal(payload: CreatePayPalPayload): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/payment-methods/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al crear PayPal');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error creating PayPal:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Marcar un método de pago como principal
+ */
+export async function setPaymentMethodPrimary(id: number): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/payment-methods/${id}/set_primary/`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al marcar como principal: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error setting primary payment method:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Desactivar un método de pago
+ */
+export async function deactivatePaymentMethod(id: number): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/payment-methods/${id}/deactivate/`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al desactivar método');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error deactivating payment method:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Activar un método de pago
+ */
+export async function activatePaymentMethod(id: number): Promise<PaymentMethod> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/payment-methods/${id}/activate/`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Error al activar método: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error activating payment method:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Eliminar un método de pago
+ */
+export async function deletePaymentMethod(id: number): Promise<void> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, `/payment-methods/${id}/`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al eliminar método');
+    }
+  } catch (error: any) {
+    console.error('Error deleting payment method:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Crear solicitud de retiro
+ */
+export async function createWithdrawalRequest(payload: CreateWithdrawalPayload): Promise<WithdrawalRequest> {
+  try {
+    const user = auth.currentUser;
+    const response = await authenticatedFetch(user, '/withdrawal-requests/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Error al solicitar retiro');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error creating withdrawal request:', error);
     
     if (error.name === 'AuthenticationError') {
       await auth.signOut();

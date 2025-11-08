@@ -4,10 +4,12 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { MuroTareas } from './components/MuroTareas';
 import { PublicarTarea } from './components/PublicarTarea';
 import { MisTareas } from './components/MisTareas';
 import { Perfil } from './components/Perfil';
+import { Notificaciones } from './components/Notificaciones';
 import { PropuestaPage } from './pages/PropuestaPage';
 
 function AppContent() {
@@ -48,12 +50,13 @@ function AppContent() {
   }
 
   return (
-    <Routes>
-      <Route path="/propuesta/:taskId" element={<PropuestaPage />} />
-      <Route path="/explorar" element={
-        <>
-          <Header />
-          {showSuccessBanner && (
+    <div className="min-h-screen flex flex-col">
+      <Routes>
+        <Route path="/propuesta/:taskId" element={<PropuestaPage />} />
+        <Route path="/explorar" element={
+          <>
+            <Header />
+            {showSuccessBanner && (
             <div className="bg-[#34A853] text-white py-3 px-4 shadow-md">
               <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -81,24 +84,35 @@ function AppContent() {
             </div>
           )}
           <MuroTareas />
+          <Footer />
         </>
       } />
       <Route path="/publicar" element={
         <>
           <Header />
           <PublicarTarea />
+          <Footer />
         </>
       } />
       <Route path="/mis-tareas" element={
         <>
           <Header />
           <MisTareas />
+          <Footer />
         </>
       } />
       <Route path="/cuenta/*" element={
         <>
           <Header />
           <Perfil />
+          <Footer />
+        </>
+      } />
+      <Route path="/notificaciones" element={
+        <>
+          <Header />
+          <Notificaciones />
+          <Footer />
         </>
       } />
       <Route path="/" element={
@@ -132,9 +146,11 @@ function AppContent() {
             </div>
           )}
           <MuroTareas />
+          <Footer />
         </>
       } />
-    </Routes>
+      </Routes>
+    </div>
   );
 }
 

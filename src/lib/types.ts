@@ -49,3 +49,138 @@ export interface UpdateProfilePayload {
   address?: string;
   profile_photo?: File;
 }
+
+export interface Balance {
+  id: number;
+  user: number;
+  user_name: string;
+  available_amount_pen: number;
+  available_amount_usd: number;
+  pending_amount_pen: number;
+  pending_amount_usd: number;
+  updated_at: string;
+}
+
+export interface Transaction {
+  id: number;
+  transaction_id: string;
+  user: number;
+  user_name: string;
+  transaction_type: 'payment' | 'withdrawal' | 'refund' | 'fee';
+  amount: number;
+  signed_amount: number;
+  currency: 'PEN' | 'USD';
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  contract: number | null;
+  task_title: string | null;
+  description: string;
+  notes: string;
+  metadata: Record<string, any>;
+  created_at: string;
+  completed_at: string | null;
+}
+
+export interface TransactionsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Transaction[];
+}
+
+export type PaymentMethodType = 'bank_account' | 'yape' | 'plin' | 'paypal' | 'wallet';
+export type Currency = 'PEN' | 'USD';
+export type AccountType = 'savings' | 'checking';
+
+export interface PaymentMethod {
+  id: number;
+  user: number;
+  user_name: string;
+  method_type: PaymentMethodType;
+  method_type_display: string;
+  identifier: string;
+  masked_identifier: string;
+  display_name: string;
+  currency: Currency;
+  currency_symbol: string;
+  details: Record<string, any>;
+  is_primary: boolean;
+  is_verified: boolean;
+  is_active: boolean;
+  notes: string;
+  display_info: {
+    id: number;
+    type: PaymentMethodType;
+    type_display: string;
+    name: string;
+    identifier: string;
+    currency: Currency;
+    currency_symbol: string;
+    is_primary: boolean;
+    is_verified: boolean;
+    is_active: boolean;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBankAccountPayload {
+  method_type: 'bank_account';
+  display_name: string;
+  currency: Currency;
+  is_primary?: boolean;
+  bank_name: string;
+  account_number: string;
+  account_type: AccountType;
+  account_holder_name: string;
+  account_holder_dni?: string;
+  swift_code?: string;
+  notes?: string;
+}
+
+export interface CreateYapePlinPayload {
+  method_type: 'yape' | 'plin';
+  wallet_type: 'yape' | 'plin';
+  display_name: string;
+  currency: 'PEN';
+  identifier: string;
+  phone_number: string;
+  account_holder_name: string;
+  is_primary?: boolean;
+  notes?: string;
+}
+
+export interface CreatePayPalPayload {
+  method_type: 'paypal';
+  wallet_type: 'paypal';
+  display_name: string;
+  currency: Currency;
+  identifier: string;
+  account_email: string;
+  account_holder_name: string;
+  is_primary?: boolean;
+  notes?: string;
+}
+
+export interface WithdrawalRequest {
+  id: number;
+  user: number;
+  user_name: string;
+  payment_method: number;
+  payment_method_display: string;
+  payment_method_type: PaymentMethodType;
+  amount: string;
+  currency: Currency;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status_display: string;
+  user_notes: string;
+  admin_notes: string;
+  transaction: number | null;
+  requested_at: string;
+  processed_at: string | null;
+}
+
+export interface CreateWithdrawalPayload {
+  payment_method_id: number;
+  amount: number;
+  user_notes?: string;
+}
