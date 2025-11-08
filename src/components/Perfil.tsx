@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User, CreditCard, Wallet, Lock, Camera, Star, ArrowUp, ArrowDown, Bank } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,9 +19,14 @@ type Section = 'datos-personales' | 'finanzas' | 'metodos-pago' | 'metodos-cobro
 
 export function Perfil() {
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState<Section>('datos-personales');
+  const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Obtener sección activa desde la URL
+  const currentSection = location.pathname.split('/cuenta/')[1] || 'datos-personales';
+  const activeSection = currentSection as Section;
 
   useEffect(() => {
     async function loadProfile() {
@@ -175,7 +181,7 @@ export function Perfil() {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSection(item.id as Section)}
+                      onClick={() => navigate(`/cuenta/${item.id}`)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
                           ? 'bg-primary text-primary-foreground'

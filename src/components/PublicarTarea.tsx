@@ -10,11 +10,7 @@ import { TaskCategory, Category } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { createTask, CreateTaskPayload, fetchCategories } from '@/services/api';
 
-interface PublicarTareaProps {
-  onSuccess?: () => void;
-}
-
-export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
+export function PublicarTarea() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
@@ -102,7 +98,6 @@ export function PublicarTarea({ onSuccess }: PublicarTareaProps) {
       setDuration('Menos de 1 hora');
 
       setTimeout(() => {
-        if (onSuccess) onSuccess();
         navigate('/?tarea=publicada');
       }, 1500);
       

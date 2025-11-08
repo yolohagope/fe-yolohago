@@ -1,6 +1,7 @@
 import { SignOut, User, PlusCircle, MagnifyingGlass, ListChecks } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,13 +13,12 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { logout } from '@/services/auth';
 
-interface HeaderProps {
-  currentView: 'explorar' | 'publicar' | 'mis-tareas' | 'perfil';
-  onViewChange: (view: 'explorar' | 'publicar' | 'mis-tareas' | 'perfil') => void;
-}
+export function Header() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-export function Header({ currentView, onViewChange }: HeaderProps) {
-    const { user } = useAuth();
+  const currentPath = location.pathname;
 
   async function handleLogout() {
     try {
@@ -47,24 +47,24 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
             
             <nav className="hidden md:flex gap-2">
               <Button
-                variant={currentView === 'explorar' ? 'default' : 'ghost'}
-                onClick={() => onViewChange('explorar')}
+                variant={currentPath === '/' || currentPath === '/explorar' ? 'default' : 'ghost'}
+                onClick={() => navigate('/explorar')}
                 className="gap-2"
               >
                 <MagnifyingGlass weight="bold" size={18} />
                 Explorar tareas
               </Button>
               <Button
-                variant={currentView === 'publicar' ? 'default' : 'ghost'}
-                onClick={() => onViewChange('publicar')}
-                className={`gap-2 ${currentView === 'publicar' ? 'bg-[#4285F4] hover:bg-[#357ae8] text-white' : ''}`}
+                variant={currentPath === '/publicar' ? 'default' : 'ghost'}
+                onClick={() => navigate('/publicar')}
+                className={`gap-2 ${currentPath === '/publicar' ? 'bg-[#4285F4] hover:bg-[#357ae8] text-white' : ''}`}
               >
                 <PlusCircle weight="bold" size={18} />
                 Publicar tarea
               </Button>
               <Button
-                variant={currentView === 'mis-tareas' ? 'default' : 'ghost'}
-                onClick={() => onViewChange('mis-tareas')}
+                variant={currentPath === '/mis-tareas' ? 'default' : 'ghost'}
+                onClick={() => navigate('/mis-tareas')}
                 className="gap-2"
               >
                 <ListChecks weight="bold" size={18} />
@@ -91,23 +91,23 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <div className="md:hidden">
-                <DropdownMenuItem onClick={() => onViewChange('explorar')}>
+                <DropdownMenuItem onClick={() => navigate('/explorar')}>
                   <MagnifyingGlass className="mr-2 h-4 w-4" />
                   <span>Explorar tareas</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onViewChange('publicar')}>
+                <DropdownMenuItem onClick={() => navigate('/publicar')}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   <span>Publicar tarea</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onViewChange('mis-tareas')}>
+                <DropdownMenuItem onClick={() => navigate('/mis-tareas')}>
                   <ListChecks className="mr-2 h-4 w-4" />
                   <span>Mis tareas</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </div>
-              <DropdownMenuItem onClick={() => onViewChange('perfil')}>
+              <DropdownMenuItem onClick={() => navigate('/cuenta')}>
                 <User className="mr-2 h-4 w-4" />
-                <span>Mi perfil</span>
+                <span>Mi cuenta</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
