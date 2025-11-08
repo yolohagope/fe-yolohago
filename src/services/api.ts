@@ -16,7 +16,12 @@ import {
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
 
-const API_BASE_URL = 'https://api.yolohago.pe/api';
+// Configuración dinámica de API según el ambiente
+// En desarrollo: usa localhost:8000 (.env.local)
+// En producción: usa https://api.yolohago.pe (.env.production)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yolohago.pe/api';
+
+console.log('🌐 API Base URL:', API_BASE_URL);
 
 /**
  * Servicio para obtener todas las categorías
