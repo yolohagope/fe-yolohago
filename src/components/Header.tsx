@@ -13,8 +13,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { logout } from '@/services/auth';
 
 interface HeaderProps {
-  currentView: 'explorar' | 'publicar';
-  onViewChange: (view: 'explorar' | 'publicar') => void;
+  currentView: 'explorar' | 'publicar' | 'mis-tareas' | 'perfil';
+  onViewChange: (view: 'explorar' | 'publicar' | 'mis-tareas' | 'perfil') => void;
 }
 
 export function Header({ currentView, onViewChange }: HeaderProps) {
@@ -63,7 +63,8 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                 Publicar tarea
               </Button>
               <Button
-                variant="ghost"
+                variant={currentView === 'mis-tareas' ? 'default' : 'ghost'}
+                onClick={() => onViewChange('mis-tareas')}
                 className="gap-2"
               >
                 <ListChecks weight="bold" size={18} />
@@ -98,13 +99,13 @@ export function Header({ currentView, onViewChange }: HeaderProps) {
                   <PlusCircle className="mr-2 h-4 w-4" />
                   <span>Publicar tarea</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onViewChange('mis-tareas')}>
                   <ListChecks className="mr-2 h-4 w-4" />
                   <span>Mis tareas</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
               </div>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewChange('perfil')}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Mi perfil</span>
               </DropdownMenuItem>

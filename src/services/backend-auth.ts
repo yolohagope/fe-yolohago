@@ -33,26 +33,36 @@ export async function authenticatedFetch(user: User | null, endpoint: string, op
     'Content-Type': 'application/json',
   };
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers
-  });
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('📡 Petición a:', url);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error('❌ Error en petición autenticada:', {
-      endpoint,
-      status: response.status,
-      error: errorText
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers
     });
-    
-    // Si es 401, el token expiró o es inválido
-    if (response.status === 401) {
-      const error = new Error('Token inválido o expirado');
-      error.name = 'AuthenticationError';
-      throw error;
-    }
-  }
 
-  return response;
+    console.log('📨 Respuesta:', response.status, response.statusText);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error en petición autenticada:', {
+        endpoint,
+        status: response.status,
+        error: errorText
+      });
+      
+      // Si es 401, el token expiró o es inválido
+      if (response.status === 401) {
+        const error = new Error('Token inválido o expirado');
+        error.name = 'AuthenticationError';
+        throw error;
+      }
+    }
+
+    return response;
+  } catch (error: any) {
+    console.error('❌ Error de red o fetch:', error);
+    throw error;
+  }
 }

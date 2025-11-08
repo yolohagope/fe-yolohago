@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { loginWithEmail, loginWithGoogle } from '@/services/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 interface LoginFormProps {
   onSwitchToRegister: () => void;
@@ -15,6 +17,9 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
 
   async function handleEmailLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +46,110 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setResetSuccess(false);
+    
+    try {
+      console.log('📧 Enviando correo de recuperación a:', resetEmail);
+      await sendPasswordResetEmail(auth, resetEmail, {
+        url: 'https://yolohago.pe',
+        handleCodeInApp: false
+      });
+      console.log('✅ Correo de recuperación enviado exitosamente');
+      setResetSuccess(true);
+    } catch (err: any) {
+      console.error('❌ Error al enviar correo:', err);
+      if (err.code === 'auth/user-not-found') {
+        setError('No existe una cuenta con este correo electrónico');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Correo electrónico inválido');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Demasiados intentos. Por favor, espera unos minutos e intenta de nuevo');
+      } else {
+        setError(err.message || 'Error al enviar el correo de recuperación');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Vista de recuperar contraseña
+  if (showResetPassword) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md p-8 space-y-6">
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl font-bold text-foreground">Recuperar contraseña</h1>
+            <p className="text-muted-foreground">
+              Ingresa tu correo y te enviaremos un link para restablecer tu contraseña
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          {resetSuccess && (
+            <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg text-sm space-y-2">
+              <p className="font-semibold">✓ Correo enviado exitosamente</p>
+              <p className="text-xs">
+                Si no recibes el correo en los próximos minutos:
+              </p>
+              <ul className="text-xs list-disc list-inside space-y-1 ml-2">
+                <li>Revisa tu carpeta de spam o correo no deseado</li>
+                <li>Verifica que el correo <strong>{resetEmail}</strong> sea correcto</li>
+                <li>Espera unos minutos, a veces tarda en llegar</li>
+              </ul>
+            </div>
+          )}
+
+          <form onSubmit={handleResetPassword} className="space-y-4">
+            <div>
+              <label htmlFor="resetEmail" className="block text-sm font-medium mb-2">
+                Correo electrónico
+              </label>
+              <Input
+                id="resetEmail"
+                type="email"
+                placeholder="tu@email.com"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading}
+            >
+              {loading ? 'Enviando...' : 'Enviar correo de recuperación'}
+            </Button>
+          </form>
+
+          <div className="text-center text-sm">
+            <button
+              type="button"
+              onClick={() => {
+                setShowResetPassword(false);
+                setError('');
+                setResetEmail('');
+              }}
+              className="text-primary font-semibold hover:underline"
+            >
+              ← Volver al inicio de sesión
+            </button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -93,6 +202,16 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
               </button>
             </div>
+          </div>
+
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => setShowResetPassword(true)}
+              className="text-sm text-primary hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
           </div>
 
           <Button

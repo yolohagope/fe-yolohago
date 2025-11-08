@@ -6,12 +6,14 @@ import { RegisterForm } from './components/RegisterForm';
 import { Header } from './components/Header';
 import { MuroTareas } from './components/MuroTareas';
 import { PublicarTarea } from './components/PublicarTarea';
+import { MisTareas } from './components/MisTareas';
+import { Perfil } from './components/Perfil';
 import { PropuestaPage } from './pages/PropuestaPage';
 
 function AppContent() {
   const { user, loading } = useAuth();
   const [showRegister, setShowRegister] = useState(false);
-  const [currentView, setCurrentView] = useState<'explorar' | 'publicar'>('explorar');
+  const [currentView, setCurrentView] = useState<'explorar' | 'publicar' | 'mis-tareas' | 'perfil'>('explorar');
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
@@ -83,8 +85,12 @@ function AppContent() {
             )}
             {currentView === 'explorar' ? (
               <MuroTareas />
-            ) : (
+            ) : currentView === 'publicar' ? (
               <PublicarTarea onSuccess={() => setCurrentView('explorar')} />
+            ) : currentView === 'mis-tareas' ? (
+              <MisTareas />
+            ) : (
+              <Perfil />
             )}
           </>
         }
