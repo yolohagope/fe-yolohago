@@ -8,6 +8,7 @@ import { TarjetaTarea } from './TarjetaTarea';
 import { TaskDetailDialog } from './TaskDetailDialog';
 import { fetchTasks, fetchCategories } from '@/services/api';
 import { Task, TaskCategory, Category } from '@/lib/types';
+import { getCategoryName } from '@/lib/utils';
 
 const locations = ['Cualquiera', 'Centro de Lima', 'Miraflores', 'San Isidro', 'Surco', 'La Molina', 'Barranco', 'Remoto'];
 const durations = ['Cualquiera', 'Menos de 1 hora', '1-2 horas', '2-4 horas', 'Más de 4 horas'];
@@ -70,7 +71,8 @@ export function MuroTareas() {
         task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.description.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesCategory = selectedCategory === 'Todas' || task.category === selectedCategory;
+      const categoryName = getCategoryName(task);
+      const matchesCategory = selectedCategory === 'Todas' || categoryName === selectedCategory;
       
       const matchesLocation = selectedLocation === 'Cualquiera' || task.location.includes(selectedLocation) || selectedLocation === 'Remoto';
       
@@ -78,7 +80,7 @@ export function MuroTareas() {
       const matchesDuration = selectedDuration === 'Cualquiera';
       
       const priceRangeConfig = priceRanges.find(range => range.value === selectedPriceRange) || priceRanges[0];
-      const taskPayment = task.payment;
+      const taskPayment = typeof task.payment === 'string' ? parseFloat(task.payment) : task.payment;
       const matchesPrice = taskPayment >= priceRangeConfig.min && taskPayment <= priceRangeConfig.max;
       
       return matchesSearch && matchesCategory && matchesLocation && matchesDuration && matchesPrice;
@@ -89,10 +91,16 @@ export function MuroTareas() {
           return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
         case 'fecha-asc':
           return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-        case 'pago-desc':
-          return b.payment - a.payment;
-        case 'pago-asc':
-          return a.payment - b.payment;
+        case 'pago-desc': {
+          const paymentA = typeof a.payment === 'string' ? parseFloat(a.payment) : a.payment;
+          const paymentB = typeof b.payment === 'string' ? parseFloat(b.payment) : b.payment;
+          return paymentB - paymentA;
+        }
+        case 'pago-asc': {
+          const paymentA = typeof a.payment === 'string' ? parseFloat(a.payment) : a.payment;
+          const paymentB = typeof b.payment === 'string' ? parseFloat(b.payment) : b.payment;
+          return paymentA - paymentB;
+        }
         default:
           return 0;
       }

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ClipboardText, Package, Clock, MapPin, CurrencyDollar } from '@phosphor-icons/react';
 import { fetchMyTasks, fetchMyPublishedTasks } from '@/services/api';
 import { Task } from '@/lib/types';
+import { getCategoryName, getPosterName } from '@/lib/utils';
 import { TaskDetailDialog } from './TaskDetailDialog';
 
 export function MisTareas() {
@@ -153,6 +154,10 @@ interface TaskCardProps {
 }
 
 function TaskCard({ task, onClick, type }: TaskCardProps) {
+  // Usar helpers para obtener valores
+  const categoryName = getCategoryName(task);
+  const posterName = getPosterName(task);
+  
   return (
     <Card
       className="p-5 hover:shadow-lg transition-all cursor-pointer border-l-4"
@@ -163,7 +168,7 @@ function TaskCard({ task, onClick, type }: TaskCardProps) {
         <Badge variant={type === 'tomada' ? 'default' : 'secondary'}>
           {type === 'tomada' ? 'En progreso' : 'Publicada'}
         </Badge>
-        <span className="text-sm text-muted-foreground">{task.category}</span>
+        <span className="text-sm text-muted-foreground">{categoryName}</span>
       </div>
 
       <h3 className="text-lg font-semibold mb-2 line-clamp-2">{task.title}</h3>
@@ -189,7 +194,7 @@ function TaskCard({ task, onClick, type }: TaskCardProps) {
       {type === 'publicada' && (
         <div className="mt-4 pt-4 border-t">
           <p className="text-sm text-muted-foreground">
-            Publicado por: <span className="font-medium text-foreground">{task.posterName || 'Usuario'}</span>
+            Publicado por: <span className="font-medium text-foreground">{posterName}</span>
           </p>
         </div>
       )}

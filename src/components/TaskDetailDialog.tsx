@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Task } from '@/lib/types';
+import { getCategoryName, isTaskVerified, getPosterName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -26,10 +27,16 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
     'Delivery': 'bg-yellow-50 text-yellow-700 border-yellow-200',
     'Limpieza': 'bg-green-50 text-green-700 border-green-200',
     'Tecnología': 'bg-purple-50 text-purple-700 border-purple-200',
+    'Regalos': 'bg-pink-50 text-pink-700 border-pink-200',
     'Otro': 'bg-gray-50 text-gray-700 border-gray-200'
   };
 
   const formattedDeadline = format(new Date(task.deadline), "d 'de' MMMM, yyyy", { locale: es });
+  
+  // Usar helpers para obtener valores
+  const categoryName = getCategoryName(task);
+  const verified = isTaskVerified(task);
+  const posterName = getPosterName(task);
 
   function handleApply() {
     if (!user) {
@@ -93,8 +100,8 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Categoría</p>
-                  <Badge variant="outline" className={`${categoryColors[task.category]} mt-1`}>
-                    {task.category}
+                  <Badge variant="outline" className={`${categoryColors[categoryName] || categoryColors['Otro']} mt-1`}>
+                    {categoryName}
                   </Badge>
                 </div>
               </div>
@@ -154,14 +161,14 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
           <div className="flex items-center gap-3 p-3 bg-accent/20 rounded-lg">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
               <span className="font-semibold text-primary">
-                {task.posterName ? task.posterName.charAt(0).toUpperCase() : 'U'}
+                {posterName.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Publicado por</p>
-              <p className="font-semibold">{task.posterName || 'Usuario'}</p>
+              <p className="font-semibold">{posterName}</p>
             </div>
-            {task.isVerified && (
+            {verified && (
               <div className="ml-auto">
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full">
                   <CheckCircle weight="fill" className="w-4 h-4 text-[#34A853]" />

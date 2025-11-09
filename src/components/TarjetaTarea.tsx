@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/lib/types';
+import { getCategoryName, isTaskVerified } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -18,10 +19,15 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
     'Delivery': 'bg-yellow-50 text-yellow-700 border-yellow-200',
     'Limpieza': 'bg-green-50 text-green-700 border-green-200',
     'Tecnología': 'bg-purple-50 text-purple-700 border-purple-200',
+    'Regalos': 'bg-pink-50 text-pink-700 border-pink-200',
     'Otro': 'bg-gray-50 text-gray-700 border-gray-200'
   };
 
   const formattedDeadline = format(new Date(task.deadline), "d 'de' MMMM", { locale: es });
+  
+  // Usar helper para obtener el nombre de la categoría
+  const categoryName = getCategoryName(task);
+  const verified = isTaskVerified(task);
 
   return (
     <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-border">
@@ -33,9 +39,9 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
             </h3>
             <Badge 
               variant="outline" 
-              className={`${categoryColors[task.category]} text-xs font-medium`}
+              className={`${categoryColors[categoryName] || categoryColors['Otro']} text-xs font-medium`}
             >
-              {task.category}
+              {categoryName}
             </Badge>
           </div>
           
@@ -62,7 +68,7 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
           </div>
         </div>
 
-        {task.isVerified && (
+        {verified && (
           <div className="flex items-center gap-1.5 pt-2">
             <CheckCircle weight="fill" className="w-4 h-4 text-[oklch(0.640_0.155_145)]" />
             <span className="text-xs font-medium text-[oklch(0.640_0.155_145)]">

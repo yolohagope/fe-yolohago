@@ -3,23 +3,32 @@ export type TaskCategory = string; // Mantenemos para compatibilidad con compone
 export interface Category {
   id: number;
   name: string;
-  slug: string;
+  slug?: string;
   icon?: string;
   description?: string;
 }
 
 export interface Task {
-  id: string;
+  id: string | number;
   title: string;
   description: string;
-  category: TaskCategory; // El backend devuelve el nombre, no el ID
-  category_id?: number;   // ID de la categoría (para referencia)
+  category: Category | string; // Puede ser objeto Category (del API) o string (mock data)
+  category_id?: number;   // ID de la categoría (para referencia, deprecado)
   payment: string | number; // API devuelve string desde DecimalField, pero puede ser number en mock data
   currency: string;
   location: string;
   deadline: string;
-  isVerified: boolean;
-  posterName?: string; // Opcional: puede no venir del API
+  is_verified?: boolean; // Nuevo nombre del API
+  isVerified?: boolean; // Nombre antiguo (mock data)
+  poster_name?: string; // Nuevo nombre del API
+  posterName?: string; // Nombre antiguo (mock data)
+  poster_email?: string; // Del API
+  tasker?: number | null; // ID del usuario que tomó la tarea
+  tasker_name?: string | null;
+  tasker_email?: string | null;
+  has_contract?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UserProfile {
