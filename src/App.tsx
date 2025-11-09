@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, useSearchParams } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { MuroTareas } from './components/MuroTareas';
@@ -13,8 +14,6 @@ import { Notificaciones } from './components/Notificaciones';
 import { PropuestaPage } from './pages/PropuestaPage';
 
 function AppContent() {
-  const { user, loading } = useAuth();
-  const [showRegister, setShowRegister] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
@@ -30,29 +29,17 @@ function AppContent() {
     }
   }, [searchParams, setSearchParams]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return showRegister ? (
-      <RegisterForm onSwitchToLogin={() => setShowRegister(false)} />
-    ) : (
-      <LoginForm onSwitchToRegister={() => setShowRegister(true)} />
-    );
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <Routes>
+        {/* Rutas de autenticación */}
+        <Route path="/login" element={<LoginForm onSwitchToRegister={() => window.location.href = '/register'} />} />
+        <Route path="/register" element={<RegisterForm onSwitchToLogin={() => window.location.href = '/login'} />} />
+        
+        {/* Ruta para propuestas */}
         <Route path="/propuesta/:taskId" element={<PropuestaPage />} />
+        
+        {/* Rutas públicas (no requieren autenticación) */}
         <Route path="/explorar" element={
           <>
             <Header />
@@ -87,34 +74,14 @@ function AppContent() {
           <Footer />
         </>
       } />
-      <Route path="/publicar" element={
-        <>
-          <Header />
-          <PublicarTarea />
-          <Footer />
-        </>
-      } />
-      <Route path="/mis-tareas" element={
-        <>
-          <Header />
-          <MisTareas />
-          <Footer />
-        </>
-      } />
-      <Route path="/cuenta/*" element={
-        <>
-          <Header />
-          <Perfil />
-          <Footer />
-        </>
-      } />
-      <Route path="/notificaciones" element={
-        <>
-          <Header />
-          <Notificaciones />
-          <Footer />
-        </>
-      } />
+      
+      {/* Rutas que requieren autenticación */}
+      <Route path="/publicar" element={<ProtectedRoute><Header /><PublicarTarea /><Footer /></ProtectedRoute>} />
+      <Route path="/mis-tareas" element={<ProtectedRoute><Header /><MisTareas /><Footer /></ProtectedRoute>} />
+      <Route path="/cuenta/*" element={<ProtectedRoute><Header /><Perfil /><Footer /></ProtectedRoute>} />
+      <Route path="/notificaciones" element={<ProtectedRoute><Header /><Notificaciones /><Footer /></ProtectedRoute>} />
+      
+      {/* Página principal (pública) */}
       <Route path="/" element={
         <>
           <Header />
@@ -149,6 +116,8 @@ function AppContent() {
           <Footer />
         </>
       } />
+      
+      {/* 404 */}
       <Route path="*" element={
         <>
           <Header />

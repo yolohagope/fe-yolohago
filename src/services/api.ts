@@ -24,118 +24,120 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yolohago.pe/ap
 console.log('🌐 API Base URL:', API_BASE_URL);
 
 /**
- * Servicio para obtener todas las categorías
+ * Fetch público (sin autenticación) para endpoints que no la requieren
  */
-export async function fetchCategories(): Promise<Category[]> {
-  try {
-    const user = auth.currentUser;
-    const response = await authenticatedFetch(user, '/categories/', {
-      method: 'GET'
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Error al cargar categorías: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Django REST Framework devuelve: {count, next, previous, results: []}
-    if (data && Array.isArray(data.results)) {
-      return data.results;
-    }
-    
-    // Fallback: si es un array directo
-    if (Array.isArray(data)) {
-      return data;
-    }
-    
-    console.warn('⚠️ Formato de respuesta inesperado:', data);
-    return [];
-  } catch (error: any) {
-    console.error('Error fetching categories:', error);
-    
-    // Si es error de autenticación, cerrar sesión
-    if (error.name === 'AuthenticationError') {
-      console.warn('⚠️ Error de autenticación, cerrando sesión...');
-      await auth.signOut();
-    }
-    
-    // Retornar array vacío en caso de error
-    return [];
-  }
-}
+async function publicFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log('🌐 Petición pública a:', url);
 
-/**
- * Servicio para obtener todas las tareas
- */
-export async function fetchTasks(): Promise<Task[]> {
-  try {
-    const user = auth.currentUser;
-    const response = await authenticatedFetch(user, '/tasks/', {
-      method: 'GET'
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Error al cargar tareas: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Django REST Framework devuelve: {count, next, previous, results: []}
-    if (data && Array.isArray(data.results)) {
-      return data.results;
-    }
-    
-    // Fallback: si es un array directo
-    if (Array.isArray(data)) {
-      return data;
-    }
-    
-    console.warn('⚠️ Formato de respuesta inesperado:', data);
-    return [];
-  } catch (error: any) {
-    console.error('Error fetching tasks:', error);
-    
-    // Si es error de autenticación, cerrar sesión
-    if (error.name === 'AuthenticationError') {
-      console.warn('⚠️ Error de autenticación, cerrando sesión...');
-      await auth.signOut();
-    }
-    
-    // Retornar array vacío en caso de error
-    return [];
-  }
-}
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
 
-/**
- * Servicio para obtener una tarea por ID
- */
-export async function fetchTaskById(id: string): Promise<Task | null> {
   try {
-    const user = auth.currentUser;
-    const response = await authenticatedFetch(user, `/tasks/${id}/`, {
-      method: 'GET'
+    const response = await fetch(url, {
+      ...options,
+      headers
     });
-    
-    if (!response.ok) {
-      if (response.status === 404) return null;
-      throw new Error(`Error al cargar tarea: ${response.statusText}`);
-    }
-    
-    const task: Task = await response.json();
-    return task;
+
+    console.log('📨 Respuesta pública:', response.status, response.statusText);
+    return response;
   } catch (error: any) {
-    console.error('Error fetching task by id:', error);
-    
-    if (error.name === 'AuthenticationError') {
-      await auth.signOut();
-    }
-    
+    console.error('❌ Error en petición pública:', error);
     throw error;
   }
 }
 
 /**
+ * Servicio para obtener todas las categorías (público - no requiere autenticación)
+ */
+export async function fetchCategories(): Promise<Category[]> {
+  try {
+    const response = await publicFetch('/categories/', {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al cargar categorías: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Django REST Framework devuelve: {count, next, previous, results: []}
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+
+    // Fallback: si es un array directo
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.warn('⚠️ Formato de respuesta inesperado:', data);
+    return [];
+  } catch (error: any) {
+    console.error('Error fetching categories:', error);
+    
+    // Retornar array vacío en caso de error
+    return [];
+  }
+}/**
+ * Servicio para obtener todas las tareas (público - no requiere autenticación)
+ */
+export async function fetchTasks(): Promise<Task[]> {
+  try {
+    const response = await publicFetch('/tasks/', {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error al cargar tareas: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Django REST Framework devuelve: {count, next, previous, results: []}
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+
+    // Fallback: si es un array directo
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.warn('⚠️ Formato de respuesta inesperado:', data);
+    return [];
+  } catch (error: any) {
+    console.error('Error fetching tasks:', error);
+
+    // Retornar array vacío en caso de error
+    return [];
+  }
+}
+
+/**
+ * Servicio para obtener una tarea por ID (público - no requiere autenticación)
+ */
+export async function fetchTaskById(id: string): Promise<Task | null> {
+  try {
+    const response = await publicFetch(`/tasks/${id}/`, {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) return null;
+      throw new Error(`Error al cargar tarea: ${response.statusText}`);
+    }
+
+    const task: Task = await response.json();
+    return task;
+  } catch (error: any) {
+    console.error('Error fetching task by id:', error);
+    throw error;
+  }
+}/**
  * Servicio para obtener las tareas que el usuario ha tomado
  */
 export async function fetchMyTasks(): Promise<Task[]> {

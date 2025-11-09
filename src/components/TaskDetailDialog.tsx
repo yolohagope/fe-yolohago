@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Task } from '@/lib/types';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -15,6 +16,7 @@ interface TaskDetailDialogProps {
 
 export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   if (!task) return null;
 
@@ -30,11 +32,25 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
   const formattedDeadline = format(new Date(task.deadline), "d 'de' MMMM, yyyy", { locale: es });
 
   function handleApply() {
+    if (!user) {
+      onClose();
+      navigate('/login');
+      return;
+    }
+
+    if (!task) return;
     onClose();
     navigate(`/propuesta/${task.id}`);
   }
 
   function handleAskQuestion() {
+    if (!user) {
+      onClose();
+      navigate('/login');
+      return;
+    }
+
+    if (!task) return;
     onClose();
     navigate(`/propuesta/${task.id}`);
   }
