@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TaskCategory, Category } from '@/lib/types';
+import { Category } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { createTask, CreateTaskPayload, fetchCategories } from '@/services/api';
 
@@ -16,7 +16,7 @@ export function PublicarTarea() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [category, setCategory] = useState<TaskCategory>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [duration, setDuration] = useState('Menos de 1 hora');
   const [payment, setPayment] = useState('');
   const [location, setLocation] = useState('Lima');
@@ -33,7 +33,7 @@ export function PublicarTarea() {
         setCategories(data);
         // Establecer la primera categoría como default
         if (data.length > 0) {
-          setCategory(data[0].name);
+          setSelectedCategoryId(data[0].id);
         }
       } catch (err) {
         console.error('Error cargando categorías:', err);
@@ -48,7 +48,7 @@ export function PublicarTarea() {
     setError('');
     setSuccess(false);
 
-    if (!title.trim() || !description.trim() || !payment) {
+    if (!title.trim() || !description.trim() || !payment || !selectedCategoryId) {
       setError('Por favor completa todos los campos');
       setLoading(false);
       return;
@@ -66,7 +66,7 @@ export function PublicarTarea() {
       const payload: CreateTaskPayload = {
         title: title.trim(),
         description: description.trim(),
-        category,
+        category_id: selectedCategoryId, // Enviamos el ID de la categoría
         payment: paymentNum,
         currency: 'S/',
         location,
@@ -93,7 +93,7 @@ export function PublicarTarea() {
       setLocation('Lima');
       setFiles([]);
       if (categories.length > 0) {
-        setCategory(categories[0].name);
+        setSelectedCategoryId(categories[0].id);
       }
       setDuration('Menos de 1 hora');
 
@@ -181,13 +181,16 @@ export function PublicarTarea() {
                 <label htmlFor="category" className="block text-sm font-medium mb-2">
                   Categoría
                 </label>
-                <Select value={category} onValueChange={(value) => setCategory(value)}>
+                <Select 
+                  value={selectedCategoryId?.toString() || ''} 
+                  onValueChange={(value) => setSelectedCategoryId(parseInt(value))}
+                >
                   <SelectTrigger id="category" className="h-12">
                     <SelectValue placeholder="Elige una categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
+                      <SelectItem key={cat.id} value={cat.id.toString()}>
                         {cat.name}
                       </SelectItem>
                     ))}

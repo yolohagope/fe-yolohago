@@ -1,4 +1,4 @@
-export type TaskCategory = string; // Ahora es dinámico desde el backend
+export type TaskCategory = string; // Mantenemos para compatibilidad con componentes existentes
 
 export interface Category {
   id: number;
@@ -12,7 +12,8 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  category: TaskCategory;
+  category: TaskCategory; // El backend devuelve el nombre, no el ID
+  category_id?: number;   // ID de la categoría (para referencia)
   payment: number;
   currency: string;
   location: string;
