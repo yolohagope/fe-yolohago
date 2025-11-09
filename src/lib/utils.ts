@@ -41,6 +41,34 @@ export function getCategoryIcon(task: Task): string | undefined {
 }
 
 /**
+ * Helper para obtener la imagen de banner de la categoría
+ */
+export function getCategoryBannerImage(task: Task): string | undefined {
+  if (typeof task.category === 'object' && task.category !== null) {
+    return task.category.banner_image;
+  }
+  return undefined;
+}
+
+/**
+ * Helper para obtener la URL completa de la imagen de banner
+ */
+export function getCategoryBannerUrl(task: Task): string | undefined {
+  const bannerImage = getCategoryBannerImage(task);
+  if (bannerImage) {
+    // Si ya es una URL completa, devolverla tal cual
+    if (bannerImage.startsWith('http')) {
+      return bannerImage;
+    }
+    // Si es una ruta relativa, construir la URL completa
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yolohago.pe/api';
+    const baseUrl = API_BASE_URL.replace('/api', '');
+    return `${baseUrl}${bannerImage}`;
+  }
+  return undefined;
+}
+
+/**
  * Helper para obtener si la tarea está verificada
  * Maneja tanto is_verified como isVerified
  */

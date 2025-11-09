@@ -6,6 +6,7 @@ export interface Category {
   slug?: string;
   icon?: string;
   description?: string;
+  banner_image?: string; // URL de la imagen de banner para la categoría
 }
 
 export interface Task {
@@ -18,6 +19,7 @@ export interface Task {
   currency: string;
   location: string;
   deadline: string;
+  image?: string | null; // Imagen de la tarea (opcional)
   is_verified?: boolean; // Nuevo nombre del API
   isVerified?: boolean; // Nombre antiguo (mock data)
   poster_name?: string; // Nuevo nombre del API

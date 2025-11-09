@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/lib/types';
-import { getCategoryName, isTaskVerified } from '@/lib/utils';
+import { getCategoryName, isTaskVerified, getCategoryBannerUrl } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -25,65 +25,99 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
 
   const formattedDeadline = format(new Date(task.deadline), "d 'de' MMMM", { locale: es });
   
-  // Usar helper para obtener el nombre de la categoría
+  // Usar helpers para obtener valores
   const categoryName = getCategoryName(task);
   const verified = isTaskVerified(task);
+  const bannerUrl = getCategoryBannerUrl(task);
 
   return (
-    <Card className="group relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border border-border">
-      <div className="p-6 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg leading-tight text-foreground line-clamp-2 mb-2">
-              {task.title}
-            </h3>
-            <Badge 
-              variant="outline" 
-              className={`${categoryColors[categoryName] || categoryColors['Otro']} text-xs font-medium`}
-            >
-              {categoryName}
-            </Badge>
+    <Card className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl border-0 rounded-2xl bg-white">
+      {/* Imagen de Banner - Aspecto ratio 16:9 pero más corta */}
+      <div className="relative w-full h-40 overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50">
+        {bannerUrl ? (
+          <img 
+            src={bannerUrl} 
+            alt={categoryName}
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            onError={(e) => {
+              // Fallback si la imagen no carga
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-4xl opacity-20">
+            📋
           </div>
-          
-          <div className="flex-shrink-0 bg-accent/10 rounded-lg px-3 py-2 border border-accent/30">
-            <div className="text-2xl font-bold text-accent-foreground leading-none">
-              {task.currency} {Number(task.payment).toFixed(2)}
-            </div>
-          </div>
+        )}
+        
+        {/* Overlay gradient para mejor legibilidad */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        
+        {/* Badge de categoría en la imagen */}
+        <div className="absolute top-3 left-3">
+          <Badge 
+            variant="secondary"
+            className="bg-white/95 backdrop-blur-sm text-foreground border-0 shadow-lg"
+          >
+            {categoryName}
+          </Badge>
         </div>
 
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+        {/* Badge verificado */}
+        {verified && (
+          <div className="absolute top-3 right-3">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/95 backdrop-blur-sm rounded-full shadow-lg">
+              <CheckCircle weight="fill" className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs font-medium text-white">
+                Verificado
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Contenido - Altura dinámica con transición */}
+      <div className="p-5 space-y-3 transition-all duration-300">
+        {/* Título */}
+        <h3 className="font-semibold text-lg leading-tight text-foreground line-clamp-2 group-hover:line-clamp-none transition-all duration-300">
+          {task.title}
+        </h3>
+
+        {/* Descripción - 1 línea por defecto, expande en hover */}
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-1 group-hover:line-clamp-3 transition-all duration-300">
           {task.description}
         </p>
 
+        {/* Información adicional */}
         <div className="space-y-2 pt-2">
-          <div className="flex items-center gap-2 text-sm text-foreground">
-            <MapPin weight="duotone" className="w-4 h-4 text-primary flex-shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin weight="duotone" className="w-4 h-4 flex-shrink-0" />
             <span className="truncate">{task.location}</span>
           </div>
           
-          <div className="flex items-center gap-2 text-sm text-foreground">
-            <Calendar weight="duotone" className="w-4 h-4 text-destructive flex-shrink-0" />
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar weight="duotone" className="w-4 h-4 flex-shrink-0" />
             <span>Hasta el {formattedDeadline}</span>
           </div>
         </div>
 
-        {verified && (
-          <div className="flex items-center gap-1.5 pt-2">
-            <CheckCircle weight="fill" className="w-4 h-4 text-[oklch(0.640_0.155_145)]" />
-            <span className="text-xs font-medium text-[oklch(0.640_0.155_145)]">
-              Pagador Verificado
+        {/* Footer con precio y botón */}
+        <div className="flex items-center justify-between gap-3 pt-3 border-t">
+          <div className="flex flex-col">
+            <span className="text-xs text-muted-foreground">Pago</span>
+            <span className="text-2xl font-bold text-primary">
+              {task.currency} {Number(task.payment).toFixed(2)}
             </span>
           </div>
-        )}
-
-        <Button 
-          className="w-full mt-4 bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-          size="default"
-          onClick={() => onViewDetails(task)}
-        >
-          Ver Detalles
-        </Button>
+          
+          <Button 
+            size="sm"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium shadow-md hover:shadow-lg transition-all"
+            onClick={() => onViewDetails(task)}
+          >
+            Ver Detalles
+          </Button>
+        </div>
       </div>
     </Card>
   );
