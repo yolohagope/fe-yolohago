@@ -154,12 +154,12 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
           <div className="flex items-center gap-3 p-3 bg-accent/20 rounded-lg">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
               <span className="font-semibold text-primary">
-                {task.posterName.charAt(0).toUpperCase()}
+                {task.posterName ? task.posterName.charAt(0).toUpperCase() : 'U'}
               </span>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Publicado por</p>
-              <p className="font-semibold">{task.posterName}</p>
+              <p className="font-semibold">{task.posterName || 'Usuario'}</p>
             </div>
             {task.isVerified && (
               <div className="ml-auto">

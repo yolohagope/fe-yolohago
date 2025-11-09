@@ -19,7 +19,7 @@ export interface Task {
   location: string;
   deadline: string;
   isVerified: boolean;
-  posterName: string;
+  posterName?: string; // Opcional: puede no venir del API
 }
 
 export interface UserProfile {

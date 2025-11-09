@@ -189,7 +189,7 @@ function TaskCard({ task, onClick, type }: TaskCardProps) {
       {type === 'publicada' && (
         <div className="mt-4 pt-4 border-t">
           <p className="text-sm text-muted-foreground">
-            Publicado por: <span className="font-medium text-foreground">{task.posterName}</span>
+            Publicado por: <span className="font-medium text-foreground">{task.posterName || 'Usuario'}</span>
           </p>
         </div>
       )}
