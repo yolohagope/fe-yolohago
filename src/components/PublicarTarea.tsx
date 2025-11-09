@@ -66,7 +66,7 @@ export function PublicarTarea() {
       const payload: CreateTaskPayload = {
         title: title.trim(),
         description: description.trim(),
-        category_id: selectedCategoryId, // Enviamos el ID de la categoría
+        category: selectedCategoryId, // Enviamos el ID de la categoría en el campo 'category'
         payment: paymentNum,
         currency: 'S/',
         location,

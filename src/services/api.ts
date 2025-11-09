@@ -246,7 +246,7 @@ export async function searchTasks(
 export interface CreateTaskPayload {
   title: string;
   description: string;
-  category_id: number; // Cambiado: ahora enviamos el ID de la categoría
+  category: number; // Cambiado: ahora enviamos el ID de la categoría como number
   payment: number;
   currency: string;
   location: string;
