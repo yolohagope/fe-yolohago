@@ -14,7 +14,7 @@ export interface Task {
   description: string;
   category: TaskCategory; // El backend devuelve el nombre, no el ID
   category_id?: number;   // ID de la categoría (para referencia)
-  payment: number;
+  payment: string | number; // API devuelve string desde DecimalField, pero puede ser number en mock data
   currency: string;
   location: string;
   deadline: string;

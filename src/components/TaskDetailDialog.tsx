@@ -69,7 +69,7 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
           <div className="flex items-center justify-between p-4 bg-accent/30 rounded-lg">
             <span className="text-sm font-medium text-muted-foreground">Pago ofrecido</span>
             <div className="text-3xl font-bold text-[#34A853]">
-              {task.currency} {task.payment.toFixed(2)}
+              {task.currency} {Number(task.payment).toFixed(2)}
             </div>
           </div>
 

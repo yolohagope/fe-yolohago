@@ -41,7 +41,7 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
           
           <div className="flex-shrink-0 bg-accent/10 rounded-lg px-3 py-2 border border-accent/30">
             <div className="text-2xl font-bold text-accent-foreground leading-none">
-              {task.currency} {task.payment.toFixed(2)}
+              {task.currency} {Number(task.payment).toFixed(2)}
             </div>
           </div>
         </div>
