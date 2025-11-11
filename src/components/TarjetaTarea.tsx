@@ -48,12 +48,12 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
 
   return (
     <Card 
-      className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-border/50 rounded-3xl bg-white h-[420px] cursor-pointer p-0"
+      className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-border/50 rounded-3xl bg-white h-[380px] cursor-pointer p-0"
       onClick={() => onViewDetails(task)}
     >
       {/* Imagen de Banner */}
       <div 
-        className="relative w-full h-48 overflow-hidden bg-gradient-to-br from-blue-400 via-blue-300 to-blue-200 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+        className="relative w-full h-36 overflow-hidden bg-gradient-to-br from-blue-400 via-blue-300 to-blue-200 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
         style={bannerUrl ? { backgroundImage: `url('${bannerUrl}')` } : {}}
       >
         {!bannerUrl && (
