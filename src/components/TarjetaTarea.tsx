@@ -74,7 +74,7 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
       </div>
 
       {/* Contenido - Crece hacia arriba descubriendo la descripción */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 pb-8 space-y-3 transition-all duration-300 h-56 group-hover:h-80">
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 pb-8 transition-all duration-300 h-56 group-hover:h-80">
         {/* Precio destacado */}
         <div className="flex items-baseline gap-1">
           <span className="text-3xl font-bold text-foreground">S/ {Number(task.payment).toFixed(0)}</span>
@@ -82,41 +82,44 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
         </div>
 
         {/* Título compacto */}
-        <h3 className="font-semibold text-base leading-snug text-foreground line-clamp-2">
+        <h3 className="font-semibold text-base leading-snug text-foreground line-clamp-2 mt-3">
           {task.title}
         </h3>
 
         {/* Descripción - Oculta inicialmente, se descubre al crecer el contenedor */}
-        <div className="overflow-hidden transition-all duration-300 max-h-0 opacity-0 group-hover:max-h-24 group-hover:opacity-100">
+        <div className="overflow-hidden transition-all duration-300 max-h-0 opacity-0 group-hover:max-h-24 group-hover:opacity-100 group-hover:mt-3">
           <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
             {task.description}
           </p>
         </div>
 
-        {/* Metadata - Mantiene posición relativa */}
-        <div className="flex items-center gap-3 text-xs text-muted-foreground pt-2">
-          <div className="flex items-center gap-1">
-            <Calendar weight="bold" className="w-4 h-4" />
-            <span>Hace 5 días</span>
+        {/* Footer fijo en la parte inferior */}
+        <div className="absolute bottom-8 left-5 right-5 space-y-3">
+          {/* Metadata */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Calendar weight="bold" className="w-4 h-4" />
+              <span>Hace 5 días</span>
+            </div>
+            <span>•</span>
+            <span>{task.location}</span>
           </div>
-          <span>•</span>
-          <span>{task.location}</span>
-        </div>
 
-        {/* Footer - Mantiene posición relativa */}
-        <div className="flex items-center justify-between pt-3 border-t">
-          {/* Botón de acción principal */}
-          <Button 
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full"
-            onClick={handleYoloHago}
-          >
-            ¡Yolo Hago!
-          </Button>
+          {/* Botón */}
+          <div className="flex items-center justify-between pt-3 border-t">
+            {/* Botón de acción principal */}
+            <Button 
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full"
+              onClick={handleYoloHago}
+            >
+              ¡Yolo Hago!
+            </Button>
 
-          {/* Estado verificado */}
-          {verified && (
-            <CheckCircle weight="fill" className="w-6 h-6 text-green-500 ml-3" />
-          )}
+            {/* Estado verificado */}
+            {verified && (
+              <CheckCircle weight="fill" className="w-6 h-6 text-green-500 ml-3" />
+            )}
+          </div>
         </div>
       </div>
     </Card>
