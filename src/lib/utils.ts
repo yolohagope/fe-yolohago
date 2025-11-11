@@ -61,7 +61,16 @@ export function getCategoryBannerUrl(task: Task): string | undefined {
       return bannerImage;
     }
     // Si es una ruta relativa, construir la URL completa
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yolohago.pe/api';
+    const getApiBaseUrl = () => {
+      const envUrl = import.meta.env.VITE_API_URL;
+      const isDevelopment = import.meta.env.DEV;
+      
+      if (envUrl) return envUrl;
+      if (isDevelopment) return 'http://localhost:8000/api';
+      return 'https://api.yolohago.pe/api';
+    };
+    
+    const API_BASE_URL = getApiBaseUrl();
     const baseUrl = API_BASE_URL.replace('/api', '');
     return `${baseUrl}${bannerImage}`;
   }

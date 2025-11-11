@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SignIn, GoogleLogo, Eye, EyeSlash } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -12,6 +13,7 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +30,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     
     try {
       await loginWithEmail(email, password);
+      // Redirigir al home después del login exitoso
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión');
     } finally {
@@ -41,6 +45,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
     
     try {
       await loginWithGoogle();
+      // Redirigir al home después del login exitoso
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión con Google');
     } finally {

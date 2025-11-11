@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, GoogleLogo, Eye, EyeSlash } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -10,6 +11,7 @@ interface RegisterFormProps {
 }
 
 export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,6 +37,8 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     
     try {
       await registerWithEmail(email, password);
+      // Redirigir al home después del registro exitoso
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Error al registrarse');
     } finally {
@@ -48,6 +52,8 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     
     try {
       await loginWithGoogle();
+      // Redirigir al home después del login con Google exitoso
+      navigate('/');
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión con Google');
     } finally {

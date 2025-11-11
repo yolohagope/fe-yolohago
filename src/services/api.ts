@@ -19,9 +19,66 @@ import { auth } from '@/lib/firebase';
 // Configuración dinámica de API según el ambiente
 // En desarrollo: usa localhost:8000 (.env.local)
 // En producción: usa https://api.yolohago.pe (.env.production)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.yolohago.pe/api';
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const isDevelopment = import.meta.env.DEV;
+  const mode = import.meta.env.MODE;
+  
+  console.log('🔍 Debug API Config:');
+  console.log('  - MODE:', mode);
+  console.log('  - DEV:', isDevelopment);
+  console.log('  - VITE_API_URL:', envUrl || 'UNDEFINED');
+  console.log('  - import.meta.env:', import.meta.env);
+  
+  // Si hay una URL configurada en .env, usarla
+  if (envUrl) {
+    console.log('✅ Usando URL de variable de entorno');
+    return envUrl;
+  }
+  
+  // Fallback: en desarrollo usar localhost, en producción usar el servidor real
+  if (isDevelopment) {
+    console.warn('⚠️ VITE_API_URL no está configurada, usando localhost por defecto');
+    return 'http://localhost:8000/api';
+  }
+  
+  console.log('📦 Modo producción, usando API de producción');
+  return 'https://api.yolohago.pe/api';
+};
 
-console.log('🌐 API Base URL:', API_BASE_URL);
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('');
+console.log('═══════════════════════════════════════════');
+console.log('🌐 CONFIGURACIÓN DE API');
+console.log('═══════════════════════════════════════════');
+console.log('📍 URL Base:', API_BASE_URL);
+console.log('🔧 Modo:', import.meta.env.MODE);
+console.log('🐛 Dev Mode:', import.meta.env.DEV);
+console.log('═══════════════════════════════════════════');
+console.log('');
+
+// Verificación de seguridad: advertir si estamos en desarrollo pero apuntando a producción
+if (import.meta.env.DEV && API_BASE_URL.includes('yolohago.pe')) {
+  console.error('');
+  console.error('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨');
+  console.error('⚠️  ADVERTENCIA CRÍTICA: DESARROLLO → PRODUCCIÓN');
+  console.error('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨');
+  console.error('⚠️  Estás en modo DESARROLLO pero apuntando a PRODUCCIÓN!');
+  console.error('⚠️  Esto puede dañar datos de producción.');
+  console.error('');
+  console.error('📋 Pasos para corregir:');
+  console.error('   1. Verifica que exista .env.local con:');
+  console.error('      VITE_API_URL=http://localhost:8000/api');
+  console.error('   2. Reinicia el servidor: Ctrl+C y ejecuta "yarn dev"');
+  console.error('   3. Limpia caché del navegador: Ctrl+Shift+R');
+  console.error('');
+  console.error('🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨');
+  console.error('');
+  
+  // Bloquear operaciones de escritura en producción desde desarrollo
+  alert('⚠️ ADVERTENCIA: Estás en desarrollo pero conectado a PRODUCCIÓN. Revisa la consola.');
+}
 
 /**
  * Fetch público (sin autenticación) para endpoints que no la requieren
@@ -248,7 +305,7 @@ export async function searchTasks(
 export interface CreateTaskPayload {
   title: string;
   description: string;
-  category: number; // Cambiado: ahora enviamos el ID de la categoría como number
+  category_id: number; // ID de la categoría a asignar
   payment: number;
   currency: string;
   location: string;

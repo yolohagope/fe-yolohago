@@ -1,6 +1,30 @@
 import { User } from 'firebase/auth';
 
-const API_BASE_URL = 'https://api.yolohago.pe/api';
+// Configuración dinámica de API - DEBE ser consistente con api.ts
+const getApiBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  const isDevelopment = import.meta.env.DEV;
+  
+  if (envUrl) {
+    return envUrl;
+  }
+  
+  if (isDevelopment) {
+    console.warn('⚠️ backend-auth: VITE_API_URL no configurada, usando localhost');
+    return 'http://localhost:8000/api';
+  }
+  
+  return 'https://api.yolohago.pe/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🔐 Backend Auth - API URL:', API_BASE_URL);
+
+// Alerta si estamos en desarrollo apuntando a producción
+if (import.meta.env.DEV && API_BASE_URL.includes('yolohago.pe')) {
+  console.error('🚨 backend-auth.ts: DESARROLLO → PRODUCCIÓN detectado!');
+}
 
 /**
  * Obtiene el token de Firebase del usuario actual (siempre fresco)
