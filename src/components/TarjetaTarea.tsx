@@ -64,17 +64,17 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
         
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-        
-        {/* Badge de categoría pequeño en el header */}
-        <div className="absolute top-3 left-3">
-          <Badge variant="secondary" className="rounded-full px-2 py-1 text-xs bg-white/90 backdrop-blur-sm">
-            {categoryName}
-          </Badge>
-        </div>
+      </div>
+
+      {/* Badge de categoría - fuera de la imagen para que no se mueva */}
+      <div className="absolute top-3 left-3 z-10">
+        <Badge variant="secondary" className="rounded-full px-2 py-1 text-xs bg-white/90 backdrop-blur-sm">
+          {categoryName}
+        </Badge>
       </div>
 
       {/* Contenido - Crece hacia arriba descubriendo la descripción */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 space-y-3 transition-all duration-300 h-56 group-hover:h-80">
+      <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-2xl p-5 pb-8 space-y-3 transition-all duration-300 h-56 group-hover:h-80">
         {/* Precio destacado */}
         <div className="flex items-baseline gap-1">
           <span className="text-3xl font-bold text-foreground">S/ {Number(task.payment).toFixed(0)}</span>
