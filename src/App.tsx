@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { MuroTareas } from './components/MuroTareas';
+import { BusquedaTareas } from './components/BusquedaTareas';
 import { PublicarTarea } from './components/PublicarTarea';
 import { MisTareas } from './components/MisTareas';
 import { Perfil } from './components/Perfil';
@@ -38,6 +39,15 @@ function AppContent() {
         
         {/* Ruta para propuestas */}
         <Route path="/propuesta/:taskId" element={<PropuestaPage />} />
+        
+        {/* Ruta para búsqueda completa */}
+        <Route path="/buscar" element={
+          <>
+            <Header />
+            <BusquedaTareas />
+            <Footer />
+          </>
+        } />
         
         {/* Rutas públicas (no requieren autenticación) */}
         <Route path="/explorar" element={
