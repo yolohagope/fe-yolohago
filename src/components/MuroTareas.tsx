@@ -88,13 +88,13 @@ export function MuroTareas() {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-12 h-14 border-0 text-[15px] focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="pl-12 h-14 border-0 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="md:w-[200px] h-14 border-0 bg-muted/50 justify-between text-[15px] font-normal">
+                    <Button variant="outline" className="md:w-[200px] h-14 border-0 bg-muted/50 justify-between text-base font-normal">
                       {selectedCategory === 'Todas' ? 'Categoría' : selectedCategory}
                       <CaretDown weight="bold" className="w-4 h-4 opacity-50" />
                     </Button>
@@ -113,7 +113,7 @@ export function MuroTareas() {
 
                 <Button 
                   onClick={handleSearch}
-                  className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-[15px] rounded-xl"
+                  className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl"
                 >
                   Buscar
                 </Button>
