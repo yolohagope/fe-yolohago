@@ -146,10 +146,10 @@ export async function fetchTasks(params?: {
   page?: number; 
   page_size?: number;
   search?: string;
-  category?: string;
+  category?: number;
   location?: string;
-  min_payment?: number;
-  max_payment?: number;
+  payment_min?: number;
+  payment_max?: number;
   ordering?: string;
 }): Promise<Task[] | { count: number; next: string | null; previous: string | null; results: Task[] }> {
   try {
@@ -158,10 +158,10 @@ export async function fetchTasks(params?: {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    if (params?.category && params.category !== 'Todas') queryParams.append('category', params.category);
+    if (params?.category) queryParams.append('category', params.category.toString());
     if (params?.location && params.location !== 'Cualquiera') queryParams.append('location', params.location);
-    if (params?.min_payment) queryParams.append('min_payment', params.min_payment.toString());
-    if (params?.max_payment !== undefined && params.max_payment !== Infinity) queryParams.append('max_payment', params.max_payment.toString());
+    if (params?.payment_min) queryParams.append('payment_min', params.payment_min.toString());
+    if (params?.payment_max !== undefined && params.payment_max !== Infinity) queryParams.append('payment_max', params.payment_max.toString());
     if (params?.ordering) queryParams.append('ordering', params.ordering);
     
     const url = `/tasks/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

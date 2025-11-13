@@ -43,6 +43,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchTerm);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
   const [selectedLocation, setSelectedLocation] = useState('Cualquiera');
   const [selectedDuration, setSelectedDuration] = useState('Cualquiera');
   const [sortBy, setSortBy] = useState('relevancia');
@@ -102,10 +103,10 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
             page: currentPage, 
             page_size: pageSize,
             search: debouncedSearchTerm || undefined,
-            category: selectedCategory !== 'Todas' ? selectedCategory : undefined,
+            category: selectedCategoryId,
             location: selectedLocation !== 'Cualquiera' ? selectedLocation : undefined,
-            min_payment: priceRangeConfig.min > 0 ? priceRangeConfig.min : undefined,
-            max_payment: priceRangeConfig.max !== Infinity ? priceRangeConfig.max : undefined,
+            payment_min: priceRangeConfig.min > 0 ? priceRangeConfig.min : undefined,
+            payment_max: priceRangeConfig.max !== Infinity ? priceRangeConfig.max : undefined,
             ordering: ordering
           }),
           fetchCategories()
@@ -136,14 +137,15 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
     }
     
     loadData();
-  }, [currentPage, debouncedSearchTerm, selectedCategory, selectedLocation, selectedPriceRange, sortBy]);
+  }, [currentPage, debouncedSearchTerm, selectedCategoryId, selectedLocation, selectedPriceRange, sortBy]);
 
   // Las tareas ya vienen filtradas y ordenadas del API
   const filteredTasks = tasks;
 
   // Función para cambiar filtros y resetear a página 1
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
+  const handleCategoryChange = (categoryName: string, categoryId?: number) => {
+    setSelectedCategory(categoryName);
+    setSelectedCategoryId(categoryId);
     setCurrentPage(1);
   };
 
@@ -165,6 +167,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
   function handleResetFilters() {
     setSearchTerm('');
     setSelectedCategory('Todas');
+    setSelectedCategoryId(undefined);
     setSelectedLocation('Cualquiera');
     setSelectedDuration('Cualquiera');
     setSelectedPriceRange('todos');
@@ -211,11 +214,11 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem onClick={() => handleCategoryChange('Todas')}>
+                <DropdownMenuItem onClick={() => handleCategoryChange('Todas', undefined)}>
                   Todas
                 </DropdownMenuItem>
                 {categories.map((category) => (
-                  <DropdownMenuItem key={category.id} onClick={() => handleCategoryChange(category.name)}>
+                  <DropdownMenuItem key={category.id} onClick={() => handleCategoryChange(category.name, category.id)}>
                     {category.name}
                   </DropdownMenuItem>
                 ))}
