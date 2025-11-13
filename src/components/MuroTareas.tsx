@@ -61,17 +61,27 @@ export function MuroTareas() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,_white_1px,_transparent_0)] bg-[length:40px_40px]"></div>
+      <div className="relative overflow-hidden">
+        {/* Imagen de fondo */}
+        <div className="absolute inset-0">
+          <img 
+            src="/images/tasks/explore_hero.png" 
+            alt="Hero background"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/60 via-blue-700/60 to-purple-600/60"></div>
         </div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
               Encontrá tu próxima tarea
             </h1>
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-white max-w-2xl mx-auto drop-shadow-lg">
               Miles de oportunidades te esperan. Ganá dinero haciendo lo que mejor sabés hacer.
             </p>
           </div>

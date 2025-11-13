@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, CreditCard, Wallet, Lock, Camera, Star, ArrowUp, ArrowDown, Bank, X, Plus, Check } from '@phosphor-icons/react';
+import { User, CreditCard, Wallet, Lock, Camera, Star, ArrowUp, ArrowDown, Bank, X, Plus, Check, ShieldCheck } from '@phosphor-icons/react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Verificacion } from './Verificacion';
 
-type Section = 'datos-personales' | 'finanzas' | 'metodos-pago' | 'metodos-cobro' | 'seguridad';
+type Section = 'datos-personales' | 'finanzas' | 'metodos-pago' | 'metodos-cobro' | 'seguridad' | 'verificacion';
 
 export function Perfil() {
   const { user } = useAuth();
@@ -55,6 +56,7 @@ export function Perfil() {
 
   const menuItems = [
     { id: 'datos-personales', label: 'Datos Personales', icon: User },
+    { id: 'verificacion', label: 'Verificación', icon: ShieldCheck },
     { id: 'finanzas', label: 'Mis Finanzas', icon: Bank },
     { id: 'metodos-pago', label: 'Métodos de Pago', icon: CreditCard },
     { id: 'metodos-cobro', label: 'Métodos de Cobro', icon: Wallet },
@@ -203,6 +205,7 @@ export function Perfil() {
           {/* Contenido principal */}
           <div className="lg:col-span-3">
             {activeSection === 'datos-personales' && <DatosPersonales profile={profile} onUpdate={setProfile} />}
+            {activeSection === 'verificacion' && <Verificacion />}
             {activeSection === 'finanzas' && <Finanzas />}
             {activeSection === 'metodos-pago' && <MetodosPago />}
             {activeSection === 'metodos-cobro' && <MetodosCobro />}
