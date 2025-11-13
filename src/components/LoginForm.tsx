@@ -144,7 +144,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
               <Button
                 type="submit"
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 cursor-pointer"
                 disabled={loading}
               >
                 {loading ? 'Enviando...' : 'Enviar correo de recuperación'}
@@ -179,8 +179,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 e.currentTarget.style.display = 'none';
               }}
             />
-            {/* Overlay gradient más fuerte para legibilidad */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/70 via-purple-600/70 to-purple-700/70"></div>
+            {/* Overlay gradient más sutil tendiendo a negro */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/40 via-blue-900/30 to-purple-900/40"></div>
           </div>
 
           {/* Contenido de texto sobre la imagen */}
@@ -275,7 +275,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
 
             <Button
               type="submit"
-              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold"
+              className="w-full h-12 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold cursor-pointer"
               disabled={loading}
             >
               {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
@@ -294,7 +294,7 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12"
+            className="w-full h-12 cursor-pointer hover:bg-red-50 hover:border-red-200 transition-colors"
             onClick={handleGoogleLogin}
             disabled={loading}
           >
@@ -327,8 +327,8 @@ export function LoginForm({ onSwitchToRegister }: LoginFormProps) {
                 e.currentTarget.style.display = 'none';
               }}
             />
-            {/* Overlay gradient más fuerte para legibilidad */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/70 via-purple-600/70 to-purple-700/70"></div>
+            {/* Overlay gradient más sutil tendiendo a negro */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900/40 via-blue-900/30 to-purple-900/40"></div>
           </div>
           
           {/* Contenido de texto sobre la imagen */}
