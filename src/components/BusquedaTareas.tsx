@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MagnifyingGlass, SlidersHorizontal, MapPin, Clock, CurrencyDollar, CaretDown } from '@phosphor-icons/react';
+import { MagnifyingGlass, SlidersHorizontal, MapPin, Clock, CurrencyDollar, CaretDown, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -8,7 +8,13 @@ import { TarjetaTarea } from './TarjetaTarea';
 import { TaskDetailDialog } from './TaskDetailDialog';
 import { fetchTasks, fetchCategories } from '@/services/api';
 import { Task, Category } from '@/lib/types';
-import { getCategoryName } from '@/lib/utils';
+
+interface PaginatedResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Task[];
+}
 
 const locations = ['Cualquiera', 'Centro de Lima', 'Miraflores', 'San Isidro', 'Surco', 'La Molina', 'Barranco', 'Remoto'];
 const durations = ['Cualquiera', 'Menos de 1 hora', '1-2 horas', '2-4 horas', 'Más de 4 horas'];
@@ -34,6 +40,7 @@ interface BusquedaTareasProps {
 
 export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Todas' }: BusquedaTareasProps) {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(initialSearchTerm);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedLocation, setSelectedLocation] = useState('Cualquiera');
@@ -46,17 +53,79 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextPage, setNextPage] = useState<string | null>(null);
+  const [previousPage, setPreviousPage] = useState<string | null>(null);
+  const pageSize = 9; // 9 tareas por página (3x3 grid)
+
+  // Debounce para el término de búsqueda
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      setCurrentPage(1); // Resetear a la primera página al buscar
+    }, 500); // Esperar 500ms después de que el usuario deje de escribir
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Cargar tareas desde el API
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const [tasksData, categoriesData] = await Promise.all([
-          fetchTasks(),
+        
+        // Preparar parámetros de filtros para el API
+        const priceRangeConfig = priceRanges.find(range => range.value === selectedPriceRange) || priceRanges[0];
+        
+        // Mapear el ordenamiento al formato del backend
+        let ordering: string | undefined = undefined;
+        switch (sortBy) {
+          case 'fecha-desc':
+            ordering = '-created_at';
+            break;
+          case 'fecha-asc':
+            ordering = 'created_at';
+            break;
+          case 'pago-desc':
+            ordering = '-payment';
+            break;
+          case 'pago-asc':
+            ordering = 'payment';
+            break;
+        }
+        
+        const [tasksResponse, categoriesData] = await Promise.all([
+          fetchTasks({ 
+            page: currentPage, 
+            page_size: pageSize,
+            search: debouncedSearchTerm || undefined,
+            category: selectedCategory !== 'Todas' ? selectedCategory : undefined,
+            location: selectedLocation !== 'Cualquiera' ? selectedLocation : undefined,
+            min_payment: priceRangeConfig.min > 0 ? priceRangeConfig.min : undefined,
+            max_payment: priceRangeConfig.max !== Infinity ? priceRangeConfig.max : undefined,
+            ordering: ordering
+          }),
           fetchCategories()
         ]);
-        setTasks(tasksData);
+        
+        // Verificar si la respuesta es paginada
+        if (tasksResponse && typeof tasksResponse === 'object' && 'results' in tasksResponse) {
+          setTasks(tasksResponse.results);
+          setTotalCount(tasksResponse.count);
+          setNextPage(tasksResponse.next);
+          setPreviousPage(tasksResponse.previous);
+        } else {
+          // Respuesta sin paginar (array directo)
+          const tasksArray = Array.isArray(tasksResponse) ? tasksResponse : [];
+          setTasks(tasksArray);
+          setTotalCount(tasksArray.length);
+          setNextPage(null);
+          setPreviousPage(null);
+        }
+        
         setCategories(categoriesData);
       } catch (err: any) {
         console.error('Error cargando datos:', err);
@@ -67,48 +136,31 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
     }
     
     loadData();
-  }, []);
+  }, [currentPage, debouncedSearchTerm, selectedCategory, selectedLocation, selectedPriceRange, sortBy]);
 
-  // Filtrar y ordenar tareas
-  const filteredTasks = (Array.isArray(tasks) ? tasks : [])
-    .filter(task => {
-      const matchesSearch = searchTerm === '' || 
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.description.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const categoryName = getCategoryName(task);
-      const matchesCategory = selectedCategory === 'Todas' || categoryName === selectedCategory;
-      
-      const matchesLocation = selectedLocation === 'Cualquiera' || task.location.includes(selectedLocation) || selectedLocation === 'Remoto';
-      
-      const matchesDuration = selectedDuration === 'Cualquiera';
-      
-      const priceRangeConfig = priceRanges.find(range => range.value === selectedPriceRange) || priceRanges[0];
-      const taskPayment = typeof task.payment === 'string' ? parseFloat(task.payment) : task.payment;
-      const matchesPrice = taskPayment >= priceRangeConfig.min && taskPayment <= priceRangeConfig.max;
-      
-      return matchesSearch && matchesCategory && matchesLocation && matchesDuration && matchesPrice;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'fecha-desc':
-          return new Date(b.deadline).getTime() - new Date(a.deadline).getTime();
-        case 'fecha-asc':
-          return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-        case 'pago-desc': {
-          const paymentA = typeof a.payment === 'string' ? parseFloat(a.payment) : a.payment;
-          const paymentB = typeof b.payment === 'string' ? parseFloat(b.payment) : b.payment;
-          return paymentB - paymentA;
-        }
-        case 'pago-asc': {
-          const paymentA = typeof a.payment === 'string' ? parseFloat(a.payment) : a.payment;
-          const paymentB = typeof b.payment === 'string' ? parseFloat(b.payment) : b.payment;
-          return paymentA - paymentB;
-        }
-        default:
-          return 0;
-      }
-    });
+  // Las tareas ya vienen filtradas y ordenadas del API
+  const filteredTasks = tasks;
+
+  // Función para cambiar filtros y resetear a página 1
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleLocationChange = (location: string) => {
+    setSelectedLocation(location);
+    setCurrentPage(1);
+  };
+
+  const handlePriceRangeChange = (priceRange: string) => {
+    setSelectedPriceRange(priceRange);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    setCurrentPage(1);
+  };
 
   function handleResetFilters() {
     setSearchTerm('');
@@ -117,6 +169,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
     setSelectedDuration('Cualquiera');
     setSelectedPriceRange('todos');
     setSortBy('relevancia');
+    setCurrentPage(1); // Resetear a la primera página
   }
 
   const hasActiveFilters = searchTerm !== '' || selectedCategory !== 'Todas' || 
@@ -129,7 +182,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Header Simple Estilo ZonaProp */}
       <div className="bg-white border-b border-border sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -158,11 +211,11 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem onClick={() => setSelectedCategory('Todas')}>
+                <DropdownMenuItem onClick={() => handleCategoryChange('Todas')}>
                   Todas
                 </DropdownMenuItem>
                 {categories.map((category) => (
-                  <DropdownMenuItem key={category.id} onClick={() => setSelectedCategory(category.name)}>
+                  <DropdownMenuItem key={category.id} onClick={() => handleCategoryChange(category.name)}>
                     {category.name}
                   </DropdownMenuItem>
                 ))}
@@ -179,7 +232,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[150px]">
                 {locations.map((location) => (
-                  <DropdownMenuItem key={location} onClick={() => setSelectedLocation(location)}>
+                  <DropdownMenuItem key={location} onClick={() => handleLocationChange(location)}>
                     {location}
                   </DropdownMenuItem>
                 ))}
@@ -196,7 +249,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-[150px]">
                 {priceRanges.map((range) => (
-                  <DropdownMenuItem key={range.value} onClick={() => setSelectedPriceRange(range.value)}>
+                  <DropdownMenuItem key={range.value} onClick={() => handlePriceRangeChange(range.value)}>
                     {range.label}
                   </DropdownMenuItem>
                 ))}
@@ -208,11 +261,6 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
               <SlidersHorizontal weight="duotone" className="w-4 h-4" />
               Más filtros
             </Button>
-
-            {/* Botón de búsqueda */}
-            <Button className="h-14 px-6 text-[15px] font-semibold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
-              Buscar
-            </Button>
           </div>
         </div>
       </div>
@@ -222,7 +270,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
         {/* Barra de resultados y ordenamiento */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground text-base">{filteredTasks.length}</span> {filteredTasks.length === 1 ? 'tarea disponible' : 'tareas disponibles'}
+            <span className="font-semibold text-foreground text-base">{totalCount}</span> {totalCount === 1 ? 'tarea disponible' : 'tareas disponibles'}
           </p>
           
           <div className="flex items-center gap-3">
@@ -236,7 +284,7 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[180px]">
                 {sortOptions.map((option) => (
-                  <DropdownMenuItem key={option.value} onClick={() => setSortBy(option.value)}>
+                  <DropdownMenuItem key={option.value} onClick={() => handleSortChange(option.value)}>
                     {option.label}
                   </DropdownMenuItem>
                 ))}
@@ -271,11 +319,69 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
             </p>
           </div>
         ) : filteredTasks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTasks.map((task) => (
-              <TarjetaTarea key={task.id} task={task} onViewDetails={handleViewDetails} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredTasks.map((task) => (
+                <TarjetaTarea key={task.id} task={task} onViewDetails={handleViewDetails} />
+              ))}
+            </div>
+            
+            {/* Paginación */}
+            {totalCount > pageSize && (
+              <div className="flex items-center justify-center gap-2 mt-12">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={!previousPage || currentPage === 1}
+                  className="gap-1"
+                >
+                  <CaretLeft weight="bold" size={16} />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, Math.ceil(totalCount / pageSize)) }, (_, i) => {
+                    const totalPages = Math.ceil(totalCount / pageSize);
+                    let pageNum;
+                    
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10 h-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                  disabled={!nextPage}
+                  className="gap-1"
+                >
+                  Siguiente
+                  <CaretRight weight="bold" size={16} />
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-16 px-4">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">

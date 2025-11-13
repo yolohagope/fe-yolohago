@@ -142,9 +142,31 @@ export async function fetchCategories(): Promise<Category[]> {
 }/**
  * Servicio para obtener todas las tareas (público - no requiere autenticación)
  */
-export async function fetchTasks(): Promise<Task[]> {
+export async function fetchTasks(params?: { 
+  page?: number; 
+  page_size?: number;
+  search?: string;
+  category?: string;
+  location?: string;
+  min_payment?: number;
+  max_payment?: number;
+  ordering?: string;
+}): Promise<Task[] | { count: number; next: string | null; previous: string | null; results: Task[] }> {
   try {
-    const response = await publicFetch('/tasks/', {
+    // Construir query params
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.category && params.category !== 'Todas') queryParams.append('category', params.category);
+    if (params?.location && params.location !== 'Cualquiera') queryParams.append('location', params.location);
+    if (params?.min_payment) queryParams.append('min_payment', params.min_payment.toString());
+    if (params?.max_payment !== undefined && params.max_payment !== Infinity) queryParams.append('max_payment', params.max_payment.toString());
+    if (params?.ordering) queryParams.append('ordering', params.ordering);
+    
+    const url = `/tasks/${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    const response = await publicFetch(url, {
       method: 'GET'
     });
 
@@ -155,8 +177,9 @@ export async function fetchTasks(): Promise<Task[]> {
     const data = await response.json();
 
     // Django REST Framework devuelve: {count, next, previous, results: []}
-    if (data && Array.isArray(data.results)) {
-      return data.results;
+    // Si tiene paginación, devolver el objeto completo
+    if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+      return data;
     }
 
     // Fallback: si es un array directo
@@ -284,7 +307,10 @@ export async function searchTasks(
   category?: string
 ): Promise<Task[]> {
   try {
-    const tasks = await fetchTasks();
+    const tasksResponse = await fetchTasks();
+    
+    // Extraer el array de tareas si viene paginado
+    const tasks = Array.isArray(tasksResponse) ? tasksResponse : tasksResponse.results;
     
     return tasks.filter(task => {
       const matchesSearch = !search || 

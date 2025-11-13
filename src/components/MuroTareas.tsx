@@ -29,7 +29,10 @@ export function MuroTareas() {
           fetchTasks(),
           fetchCategories()
         ]);
-        setTasks(tasksData);
+        
+        // Manejar respuesta paginada o array directo
+        const tasksList = Array.isArray(tasksData) ? tasksData : tasksData.results;
+        setTasks(tasksList);
         setCategories(categoriesData);
       } catch (err: any) {
         console.error('Error cargando datos:', err);
