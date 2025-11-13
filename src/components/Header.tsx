@@ -45,57 +45,53 @@ export function Header() {
     <header className="border-b border-border bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between">
+          <button 
+            onClick={() => navigate('/')}
+            className="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
+          >
+            YoLoHago
+          </button>
+          
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => navigate('/')}
-              className="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer"
-            >
-              YoLoHago
-            </button>
-            
-            <nav className="hidden md:flex gap-2">
-              <Button
-                variant={currentPath === '/' || currentPath === '/explorar' ? 'default' : 'ghost'}
+            {/* Navegación principal */}
+            <nav className="hidden md:flex items-center gap-6">
+              <button
                 onClick={() => navigate('/explorar')}
-                className="gap-2"
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
+                  currentPath === '/' || currentPath === '/explorar' 
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground'
+                }`}
               >
-                <MagnifyingGlass weight="bold" size={18} />
-                Explorar tareas
-              </Button>
+                Explorar
+              </button>
               
-              {user ? (
-                <>
-                  <Button
-                    variant={currentPath === '/publicar' ? 'default' : 'ghost'}
-                    onClick={() => navigate('/publicar')}
-                    className={`gap-2 ${currentPath === '/publicar' ? 'bg-[#4285F4] hover:bg-[#357ae8] text-white' : ''}`}
-                  >
-                    <PlusCircle weight="bold" size={18} />
-                    Publicar tarea
-                  </Button>
-                  <Button
-                    variant={currentPath === '/mis-tareas' ? 'default' : 'ghost'}
-                    onClick={() => navigate('/mis-tareas')}
-                    className="gap-2"
-                  >
-                    <ListChecks weight="bold" size={18} />
-                    Mis tareas
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  variant="ghost"
-                  onClick={() => navigate('/login')}
-                  className={`gap-2 bg-[#4285F4] hover:bg-[#357ae8] text-white`}
+              <button
+                onClick={() => navigate('/publicar')}
+                className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
+                  currentPath === '/publicar' 
+                    ? 'text-foreground' 
+                    : 'text-muted-foreground'
+                }`}
+              >
+                Publicar tarea
+              </button>
+
+              {user && (
+                <button
+                  onClick={() => navigate('/mis-tareas')}
+                  className={`text-sm font-medium transition-colors hover:text-primary cursor-pointer ${
+                    currentPath === '/mis-tareas' 
+                      ? 'text-foreground' 
+                      : 'text-muted-foreground'
+                  }`}
                 >
-                  <PlusCircle weight="bold" size={18} />
-                  Publicar tarea
-                </Button>
+                  Mis tareas
+                </button>
               )}
             </nav>
-          </div>
-          
-          <div className="flex items-center gap-2">
+
+            {/* Elementos de usuario */}
             {user ? (
               <>
                 {/* Campanita de notificaciones */}
@@ -226,16 +222,17 @@ export function Header() {
               </>
             ) : (
               // Usuario no autenticado - mostrar botones de login/registro
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
+              <div className="flex items-center gap-6">
+                <button
                   onClick={() => navigate('/login')}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   Iniciar sesión
-                </Button>
+                </button>
                 <Button
                   onClick={() => navigate('/register')}
-                  className="bg-[#4285F4] hover:bg-[#357ae8] text-white"
+                  size="sm"
+                  className="bg-[#4285F4] hover:bg-[#357ae8] text-white cursor-pointer"
                 >
                   Registrarse
                 </Button>

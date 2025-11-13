@@ -48,7 +48,7 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
 
   return (
     <Card 
-      className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-border/50 rounded-3xl bg-white h-[380px] cursor-pointer p-0"
+      className="group relative overflow-hidden transition-all duration-300 hover:shadow-2xl border border-gray-200/60 rounded-3xl bg-white h-[380px] cursor-pointer p-0"
       onClick={() => onViewDetails(task)}
     >
       {/* Imagen de Banner */}

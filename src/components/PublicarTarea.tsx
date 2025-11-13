@@ -353,7 +353,7 @@ export function PublicarTarea() {
                     <Button
                       onClick={handleQuickPublish}
                       disabled={!title.trim()}
-                      className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl cursor-pointer"
+                      className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl cursor-pointer disabled:cursor-not-allowed"
                     >
                       Publicar
                     </Button>

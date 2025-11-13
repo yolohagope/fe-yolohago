@@ -56,7 +56,7 @@ export function MuroTareas() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-blue-500 via-blue-600 to-purple-600 overflow-hidden">
         <div className="absolute inset-0 opacity-10">
