@@ -86,7 +86,7 @@ function AppContent() {
       } />
       
       {/* Rutas que requieren autenticación */}
-      <Route path="/publicar" element={<ProtectedRoute><Header /><PublicarTarea /><Footer /></ProtectedRoute>} />
+      <Route path="/publicar" element={<><Header /><PublicarTarea /><Footer /></>} />
       <Route path="/mis-tareas" element={<ProtectedRoute><Header /><MisTareas /><Footer /></ProtectedRoute>} />
       <Route path="/cuenta/*" element={<ProtectedRoute><Header /><Perfil /><Footer /></ProtectedRoute>} />
       <Route path="/notificaciones" element={<ProtectedRoute><Header /><Notificaciones /><Footer /></ProtectedRoute>} />

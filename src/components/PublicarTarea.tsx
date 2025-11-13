@@ -211,7 +211,20 @@ export function PublicarTarea() {
   }
 
   function handleNextStep() {
+    // Verificar autenticación PRIMERO
+    if (!user) {
+      setError('Debes iniciar sesión para continuar con la publicación');
+      // Scroll al top para ver el mensaje
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // Redirigir al login después de un momento
+      setTimeout(() => {
+        navigate('/login?redirect=/publicar');
+      }, 2000);
+      return;
+    }
+
     // Limpiar errores previos
+    setError('');
     setFieldErrors({
       title: '',
       description: '',
@@ -415,6 +428,13 @@ export function PublicarTarea() {
           {success && (
             <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
               ✓ Tarea publicada exitosamente
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg mb-6 text-sm flex items-start gap-2">
+              <span className="text-lg">⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
