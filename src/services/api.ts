@@ -11,7 +11,12 @@ import {
   CreateYapePlinPayload,
   CreatePayPalPayload,
   WithdrawalRequest,
-  CreateWithdrawalPayload
+  CreateWithdrawalPayload,
+  Notification,
+  NotificationsResponse,
+  NotificationType,
+  NotificationPriority,
+  NotificationPreferences
 } from '@/lib/types';
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
@@ -931,3 +936,352 @@ export async function createWithdrawalRequest(payload: CreateWithdrawalPayload):
     throw error;
   }
 }
+
+// ============================================
+// NOTIFICACIONES
+// ============================================
+
+/**
+ * Obtiene las notificaciones del usuario autenticado con filtros opcionales
+ */
+export async function fetchNotifications(params?: {
+  page?: number;
+  page_size?: number;
+  is_read?: boolean;
+  type?: NotificationType;
+  priority?: NotificationPriority;
+  since?: string; // ISO 8601 timestamp
+  exclude_expired?: boolean;
+  ordering?: string;
+}): Promise<NotificationsResponse> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const queryParams = new URLSearchParams();
+    
+    if (params?.page) {
+      const offset = (params.page - 1) * (params.page_size || 10);
+      queryParams.append('offset', offset.toString());
+    }
+    
+    if (params?.page_size) {
+      queryParams.append('limit', params.page_size.toString());
+    }
+    
+    if (params?.is_read !== undefined) {
+      queryParams.append('is_read', params.is_read.toString());
+    }
+    
+    if (params?.type) {
+      queryParams.append('type', params.type);
+    }
+    
+    if (params?.priority) {
+      queryParams.append('priority', params.priority);
+    }
+    
+    if (params?.since) {
+      queryParams.append('since', params.since);
+    }
+    
+    if (params?.exclude_expired) {
+      queryParams.append('exclude_expired', 'true');
+    }
+    
+    if (params?.ordering) {
+      queryParams.append('ordering', params.ordering);
+    }
+    
+    const url = `${API_BASE_URL}/notifications/${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+    const response = await authenticatedFetch(user, url);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener notificaciones');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching notifications:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtiene el contador de notificaciones no leídas
+ */
+export async function getUnreadNotificationsCount(): Promise<number> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(user, `${API_BASE_URL}/notifications/unread_count/`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener contador de notificaciones');
+    }
+    
+    const data = await response.json();
+    return data.unread_count;
+  } catch (error: any) {
+    console.error('Error fetching unread notifications count:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Marca una notificación como leída
+ */
+export async function markNotificationAsRead(notificationId: number): Promise<Notification> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `${API_BASE_URL}/notifications/${notificationId}/mark_as_read/`,
+      {
+        method: 'POST'
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al marcar notificación como leída');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error marking notification as read:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Marca múltiples notificaciones como leídas
+ */
+export async function markMultipleNotificationsAsRead(notificationIds: number[]): Promise<{ message: string; count: number }> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `${API_BASE_URL}/notifications/mark_multiple_as_read/`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ notification_ids: notificationIds })
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al marcar notificaciones como leídas');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error marking multiple notifications as read:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Marca todas las notificaciones como leídas
+ */
+export async function markAllNotificationsAsRead(): Promise<{ message: string; count: number }> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `${API_BASE_URL}/notifications/mark_all_as_read/`,
+      {
+        method: 'POST'
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al marcar todas las notificaciones como leídas');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error marking all notifications as read:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtiene el detalle de una notificación (automáticamente la marca como leída)
+ */
+export async function getNotificationDetail(notificationId: number): Promise<Notification> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(user, `${API_BASE_URL}/notifications/${notificationId}/`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener detalle de notificación');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching notification detail:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Elimina las notificaciones ya leídas
+ */
+export async function deleteReadNotifications(): Promise<{ message: string; count: number }> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `${API_BASE_URL}/notifications/delete_read/`,
+      {
+        method: 'DELETE'
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al eliminar notificaciones leídas');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error deleting read notifications:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtiene las preferencias de notificación del usuario
+ */
+export async function getNotificationPreferences(): Promise<NotificationPreferences> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(user, `${API_BASE_URL}/notification-preferences/`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener preferencias de notificación');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching notification preferences:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Actualiza las preferencias de notificación del usuario
+ */
+export async function updateNotificationPreferences(preferences: Partial<NotificationPreferences>): Promise<NotificationPreferences> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `${API_BASE_URL}/notification-preferences/`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preferences)
+      }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Error al actualizar preferencias de notificación');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error updating notification preferences:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+

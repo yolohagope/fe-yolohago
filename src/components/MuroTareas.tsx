@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { TarjetaTarea } from './TarjetaTarea';
 import { TaskDetailDialog } from './TaskDetailDialog';
+import { HeroSection } from './HeroSection';
 import { fetchTasks, fetchCategories } from '@/services/api';
 import { Task, Category } from '@/lib/types';
 
@@ -61,80 +62,57 @@ export function MuroTareas() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        {/* Imagen de fondo */}
-        <div className="absolute inset-0">
-          <img 
-            src="/images/tasks/explore_hero.png" 
-            alt="Hero background"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/60 via-blue-700/60 to-purple-600/60"></div>
-        </div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
-          <div className="text-center mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 drop-shadow-2xl">
-              Encontrá tu próxima tarea
-            </h1>
-            <p className="text-lg md:text-xl text-white max-w-2xl mx-auto drop-shadow-lg">
-              Miles de oportunidades te esperan. Ganá dinero haciendo lo que mejor sabés hacer.
-            </p>
-          </div>
-
-          {/* Buscador Principal */}
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-2xl shadow-2xl p-2">
-              <div className="flex flex-col md:flex-row gap-2">
-                <div className="flex-1 relative">
-                  <MagnifyingGlass 
-                    weight="duotone" 
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" 
-                  />
-                  <Input
-                    type="text"
-                    placeholder="¿Qué tarea estás buscando?"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                    className="pl-12 h-14 border-0 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
-                </div>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="md:w-[200px] h-14 border-0 bg-muted/50 justify-between text-base font-normal">
-                      {selectedCategory === 'Todas' ? 'Categoría' : selectedCategory}
-                      <CaretDown weight="bold" className="w-4 h-4 opacity-50" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px]">
-                    <DropdownMenuItem onClick={() => setSelectedCategory('Todas')}>
-                      Todas las categorías
-                    </DropdownMenuItem>
-                    {categories.map((category) => (
-                      <DropdownMenuItem key={category.id} onClick={() => setSelectedCategory(category.name)}>
-                        {category.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Button 
-                  onClick={handleSearch}
-                  className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl"
-                >
-                  Buscar
-                </Button>
-              </div>
+      <HeroSection
+        imageSrc="/images/tasks/explore_hero.png"
+        title="Encontrá tu próxima tarea"
+        subtitle="Miles de oportunidades te esperan. Ganá dinero haciendo lo que mejor sabés hacer."
+      >
+        {/* Buscador Principal */}
+        <div className="bg-white rounded-2xl shadow-2xl p-2">
+          <div className="flex flex-col md:flex-row gap-2">
+            <div className="flex-1 relative">
+              <MagnifyingGlass 
+                weight="duotone" 
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" 
+              />
+              <Input
+                type="text"
+                placeholder="¿Qué tarea estás buscando?"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                className="pl-12 h-14 border-0 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
             </div>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="md:w-[200px] h-14 border-0 bg-muted/50 justify-between text-base font-normal">
+                  {selectedCategory === 'Todas' ? 'Categoría' : selectedCategory}
+                  <CaretDown weight="bold" className="w-4 h-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuItem onClick={() => setSelectedCategory('Todas')}>
+                  Todas las categorías
+                </DropdownMenuItem>
+                {categories.map((category) => (
+                  <DropdownMenuItem key={category.id} onClick={() => setSelectedCategory(category.name)}>
+                    {category.name}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button 
+              onClick={handleSearch}
+              className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl"
+            >
+              Buscar
+            </Button>
           </div>
         </div>
-      </div>
+      </HeroSection>
 
       {/* Sección de Tareas Recientes */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

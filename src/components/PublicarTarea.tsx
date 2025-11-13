@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { HeroSection } from './HeroSection';
 import { Category } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { createTask, CreateTaskPayload, fetchCategories } from '@/services/api';
@@ -322,47 +323,41 @@ export function PublicarTarea() {
   if (!showFullForm) {
     return (
       <div className="min-h-screen bg-background">
-        {/* Hero Section con fondo azul */}
-        <div className="bg-gradient-to-br from-[#4285F4] via-[#5A8FF5] to-[#7B5FED] pb-8">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
-            {/* Hero Section */}
-            <div className="text-center">
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                El tiempo es corto,<br />
-                <span className="text-white/90">úsalo en lo que más te importa</span>
-              </h1>
-              <p className="text-lg md:text-xl text-white/80 mb-12">
-                Para todo lo demás, usa YoLoHago
-              </p>
-
-              {/* Quick Input */}
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-2xl shadow-2xl p-2">
-                  <div className="flex flex-col md:flex-row gap-2">
-                    <div className="flex-1 flex items-center px-4">
-                      <span className="text-muted-foreground mr-2 font-medium whitespace-nowrap text-base">Necesito</span>
-                      <Input
-                        type="text"
-                        placeholder="¿qué necesitas que alguien haga por ti?"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleQuickPublish()}
-                        className="border-0 h-14 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleQuickPublish}
-                      disabled={!title.trim()}
-                      className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      Publicar
-                    </Button>
-                  </div>
-                </div>
+        {/* Hero Section */}
+        <HeroSection
+          imageSrc="/images/tasks/post_hero.png"
+          title={
+            <>
+              El tiempo es corto,<br />
+              <span className="text-white/90">úsalo en lo que más te importa</span>
+            </>
+          }
+          subtitle="Para todo lo demás, usa YoLoHago"
+        >
+          {/* Quick Input */}
+          <div className="bg-white rounded-2xl shadow-2xl p-2">
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex-1 flex items-center px-4">
+                <span className="text-muted-foreground mr-2 font-medium whitespace-nowrap text-base">Necesito</span>
+                <Input
+                  type="text"
+                  placeholder="¿qué necesitas que alguien haga por ti?"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleQuickPublish()}
+                  className="border-0 h-14 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
               </div>
+              <Button
+                onClick={handleQuickPublish}
+                disabled={!title.trim()}
+                className="h-14 px-8 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold text-base rounded-xl cursor-pointer disabled:cursor-not-allowed"
+              >
+                Publicar
+              </Button>
             </div>
           </div>
-        </div>
+        </HeroSection>
 
         {/* Ideas Section con fondo blanco */}
         <div className="bg-background">

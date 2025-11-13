@@ -197,3 +197,67 @@ export interface CreateWithdrawalPayload {
   amount: number;
   user_notes?: string;
 }
+
+export type NotificationType = 
+  | 'message'
+  | 'alert'
+  | 'reminder'
+  | 'promotion'
+  | 'info'
+  | 'welcome';
+
+export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export interface Notification {
+  id: number;
+  notification_type: NotificationType;
+  type_display: string;
+  priority: NotificationPriority;
+  priority_display: string;
+  title: string;
+  message: string;
+  actor: number | null;
+  actor_name: string | null;
+  actor_avatar: string | null;
+  related_object_type: string | null;
+  related_object_id: number | null;
+  payload: {
+    template_id?: number;
+    template_name?: string;
+    signal?: string;
+    [key: string]: any;
+  };
+  is_read: boolean;
+  read_at: string | null;
+  action_url: string | null;
+  action_label: string | null;
+  sent_via_email: boolean;
+  sent_via_push: boolean;
+  is_expired: boolean;
+  expires_at: string | null;
+  created_at: string;
+  time_ago: string;
+}
+
+export interface NotificationsResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Notification[];
+}
+
+export interface NotificationPreferences {
+  enable_in_app: boolean;
+  enable_email: boolean;
+  enable_push: boolean;
+  notification_types_config: Record<string, {
+    in_app: boolean;
+    email: boolean;
+    push: boolean;
+  }>;
+  quiet_hours_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+  email_digest_frequency: 'instant' | 'daily' | 'weekly' | 'never';
+}
+

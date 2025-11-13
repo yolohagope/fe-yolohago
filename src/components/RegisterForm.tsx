@@ -188,7 +188,7 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
         {/* Imagen de fondo */}
         <div className="absolute inset-0">
           <img 
-            src="/images/auth/right_0.png" 
+            src="/images/auth/right_1.png" 
             alt="Ilustración de registro"
             className="w-full h-full object-cover"
             onError={(e) => {

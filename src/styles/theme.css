@@ -84,6 +84,18 @@
   ::file-selector-button {
     border-color: var(--color-gray-300, currentColor);
   }
+
+  /* Placeholders más sutiles */
+  ::placeholder {
+    color: var(--color-gray-400);
+    opacity: 0.4;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
+    opacity: 0.4;
+  }
 }
 
 @layer base {
