@@ -69,7 +69,7 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
       <DrawerContent className="h-[100vh] md:h-[92vh] md:max-w-3xl md:w-full">
         {/* Header con título y detalles */}
         <DrawerHeader className="relative border-b border-slate-200 pb-4 px-6 md:px-8 shrink-0">
-          <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
+          <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none cursor-pointer">
             <X className="h-5 w-5" />
             <span className="sr-only">Cerrar</span>
           </DrawerClose>
@@ -195,14 +195,14 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleApply}
-              className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium shadow-sm"
+              className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium shadow-sm cursor-pointer"
             >
               Enviar propuesta
             </Button>
             <Button
               onClick={handleAskQuestion}
               variant="outline"
-              className="flex-1 h-12 font-medium border-slate-200 hover:bg-slate-50"
+              className="flex-1 h-12 font-medium border-slate-200 hover:bg-slate-50 cursor-pointer"
             >
               Hacer una pregunta
             </Button>

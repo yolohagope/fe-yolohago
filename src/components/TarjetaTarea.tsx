@@ -1,4 +1,5 @@
 import { MapPin, Calendar, CheckCircle, User } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,8 @@ interface TarjetaTareaProps {
 }
 
 export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
+  const navigate = useNavigate();
+  
   const categoryColors: Record<string, string> = {
     'Compras': 'bg-blue-50 text-blue-700 border-blue-200',
     'Trámites': 'bg-red-50 text-red-700 border-red-200',
@@ -42,8 +45,8 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
 
   const handleYoloHago = (e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar que se dispare el click de la tarjeta
-    // TODO: Implementar lógica de "Yolo Hago" (aplicar a la tarea)
-    console.log('¡Yolo Hago! para tarea:', task.id);
+    // Navegar a la página de propuesta
+    navigate(`/propuesta/${task.id}`);
   };
 
   return (
@@ -106,10 +109,10 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
           </div>
 
           {/* Botón */}
-          <div className="flex items-center justify-between pt-3 border-t">
+          <div className="flex items-center justify-between pt-3 border-t relative z-20">
             {/* Botón de acción principal */}
             <Button 
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full relative z-30 pointer-events-auto"
               onClick={handleYoloHago}
             >
               ¡Yolo Hago!

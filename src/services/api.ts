@@ -273,45 +273,56 @@ export async function fetchMyPublishedTasks(): Promise<Task[]> {
   try {
     const user = auth.currentUser;
     if (!user) {
+      console.warn('⚠️ fetchMyPublishedTasks: Usuario no autenticado');
       throw new Error('Usuario no autenticado');
     }
 
+    console.log('🔄 fetchMyPublishedTasks: Obteniendo perfil de usuario...');
+    
     // Obtener el perfil del usuario para conseguir su user_id del backend
-    const profileResponse = await authenticatedFetch(user, `${API_BASE_URL}/users/profile/`);
+    const profileResponse = await authenticatedFetch(user, `/profile/`);
     
     if (!profileResponse.ok) {
+      console.error('❌ fetchMyPublishedTasks: Error al obtener perfil:', profileResponse.status);
       throw new Error('Error al obtener perfil de usuario');
     }
     
     const profile = await profileResponse.json();
     const userId = profile.id;
+    
+    console.log('✅ fetchMyPublishedTasks: User ID:', userId);
 
     // Usar el filtro poster={user_id}
+    console.log('🔄 fetchMyPublishedTasks: Consultando tareas publicadas...');
     const response = await authenticatedFetch(
       user, 
-      `${API_BASE_URL}/tasks/?poster=${userId}`
+      `/tasks/?poster=${userId}`
     );
     
     if (!response.ok) {
+      console.error('❌ fetchMyPublishedTasks: Error en request:', response.status);
       throw new Error(`Error al cargar mis publicaciones: ${response.statusText}`);
     }
     
     const data = await response.json();
+    console.log('📦 fetchMyPublishedTasks: Respuesta del servidor:', data);
     
     // Django REST Framework devuelve: {count, next, previous, results: []}
     if (data && Array.isArray(data.results)) {
+      console.log(`✅ fetchMyPublishedTasks: ${data.results.length} tareas encontradas`);
       return data.results;
     }
     
     // Fallback: si es un array directo
     if (Array.isArray(data)) {
+      console.log(`✅ fetchMyPublishedTasks: ${data.length} tareas encontradas (array directo)`);
       return data;
     }
     
-    console.warn('⚠️ Formato de respuesta inesperado:', data);
+    console.warn('⚠️ fetchMyPublishedTasks: Formato de respuesta inesperado:', data);
     return [];
   } catch (error: any) {
-    console.error('Error fetching my published tasks:', error);
+    console.error('❌ fetchMyPublishedTasks: Error completo:', error);
     
     if (error.name === 'AuthenticationError') {
       console.warn('⚠️ Error de autenticación, cerrando sesión...');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Star, CheckCircle, Clock } from '@phosphor-icons/react';
+import { Star, CheckCircle, Clock, CaretRight, House, MapPin, Calendar, User as UserIcon } from '@phosphor-icons/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchTaskById, createApplication } from '@/services/api';
 import { Task } from '@/lib/types';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { getCategoryName, isTaskVerified, getPosterName } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export function PropuestaPage() {
   const { taskId } = useParams();
@@ -19,32 +25,42 @@ export function PropuestaPage() {
   const [offeredPrice, setOfferedPrice] = useState('');
   const [currency, setCurrency] = useState('S/');
   const [message, setMessage] = useState('');
+  const [consultaMessage, setConsultaMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [consultaLoading, setConsultaLoading] = useState(false);
   const [taskLoading, setTaskLoading] = useState(true);
   const [task, setTask] = useState<Task | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('propuesta');
 
   useEffect(() => {
     async function loadTask() {
-      if (!taskId) return;
+      if (!taskId) {
+        setError('ID de tarea no proporcionado');
+        setTaskLoading(false);
+        return;
+      }
       
       setTaskLoading(true);
       setError(null);
       
       try {
+        console.log('Cargando tarea con ID:', taskId);
         const taskData = await fetchTaskById(taskId);
         if (taskData) {
+          console.log('Tarea cargada:', taskData);
           setTask(taskData);
           // Pre-llenar con el precio y moneda de la tarea
           setOfferedPrice(taskData.payment.toString());
           setCurrency(taskData.currency);
         } else {
+          console.log('Tarea no encontrada');
           setError('Tarea no encontrada');
         }
       } catch (err: any) {
         console.error('Error loading task:', err);
-        setError('Error al cargar los detalles de la tarea');
+        setError(`Error al cargar los detalles de la tarea: ${err.message || 'Error desconocido'}`);
       } finally {
         setTaskLoading(false);
       }
@@ -73,22 +89,13 @@ export function PropuestaPage() {
   if (taskLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="border-b border-border bg-card">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Volver</span>
-            </button>
-          </div>
-        </div>
+        <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">Cargando detalles de la tarea...</p>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -97,23 +104,14 @@ export function PropuestaPage() {
   if (error || !task) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="border-b border-border bg-card">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft size={20} />
-              <span>Volver</span>
-            </button>
-          </div>
-        </div>
+        <Header />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="p-12 text-center">
             <p className="text-red-600 mb-4">{error || 'Tarea no encontrada'}</p>
             <Button onClick={() => navigate(-1)}>Volver</Button>
           </Card>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -155,96 +153,88 @@ export function PropuestaPage() {
     }
   }
 
+  async function handleConsulta(e: React.FormEvent) {
+    e.preventDefault();
+    setConsultaLoading(true);
+
+    try {
+      // TODO: Implementar API para enviar consulta
+      console.log('Consulta enviada:', consultaMessage);
+      
+      // Simular envío
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert('Consulta enviada exitosamente');
+      setConsultaMessage('');
+    } catch (err: any) {
+      console.error('Error al enviar consulta:', err);
+      alert('Error al enviar la consulta');
+    } finally {
+      setConsultaLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b border-border bg-card">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft size={20} />
-            <span>Volver</span>
-          </button>
+      {/* Header principal del sitio */}
+      <Header />
+
+      {/* Breadcrumb */}
+      <div className="border-b bg-background">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+            <button
+              onClick={() => navigate('/')}
+              className="hover:text-foreground transition-colors flex items-center gap-1"
+            >
+              <House className="w-4 h-4" />
+              Inicio
+            </button>
+            <CaretRight className="w-4 h-4" />
+            <button
+              onClick={() => navigate('/buscar')}
+              className="hover:text-foreground transition-colors"
+            >
+              Buscar tareas
+            </button>
+            <CaretRight className="w-4 h-4" />
+            <span className="text-foreground font-medium">Preparar propuesta</span>
+          </nav>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Perfil del usuario y stats */}
-        <Card className="p-6 mb-6">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <Avatar className="h-20 w-20">
-              <AvatarImage src={user?.photoURL || undefined} alt={displayName} />
-              <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-            </Avatar>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Layout de 2 columnas */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Columna principal (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Tabs: Propuesta y Consulta */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="w-full justify-start border-b border-border bg-transparent p-0 h-auto rounded-none">
+            <TabsTrigger 
+              value="propuesta"
+              className="rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:shadow-none px-6 py-3"
+            >
+              Enviar propuesta
+            </TabsTrigger>
+            <TabsTrigger 
+              value="consulta"
+              className="rounded-t-md rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-primary/10 data-[state=active]:shadow-none px-6 py-3"
+            >
+              Hacer consulta
+            </TabsTrigger>
+          </TabsList>
 
-            <div className="flex-1 space-y-3">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-2xl font-bold">{displayName}</h2>
-                  <CheckCircle weight="fill" className="w-5 h-5 text-[#4285F4]" />
-                </div>
-                <p className="text-sm text-muted-foreground">Perú</p>
-              </div>
-
-              <div className="flex flex-wrap gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        weight={i < Math.floor(userStats.rating) ? 'fill' : 'regular'}
-                        className={`w-4 h-4 ${i < Math.floor(userStats.rating) ? 'text-yellow-500' : 'text-gray-300'}`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-sm font-semibold">{userStats.rating}</span>
-                </div>
-
-                <div className="text-sm">
-                  <span className="font-semibold">Proyectos:</span> Publicados: {userStats.projectsPublished} / Pagos: {userStats.projectsPaid} ({Math.round((userStats.projectsPaid / userStats.projectsPublished) * 100)}%)
-                </div>
-
-                <div className="text-sm">
-                  <span className="font-semibold">Registrado desde:</span> Mayo, 2019
-                </div>
-              </div>
-            </div>
-
-            <Badge variant="outline" className="text-yellow-700 border-yellow-300 bg-yellow-50">
-              Evaluando propuestas
-            </Badge>
-          </div>
-        </Card>
-
-        {/* Info de la tarea */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Preparar propuesta</h1>
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <p className="text-muted-foreground mb-1">Proyecto:</p>
-              <p className="font-semibold">{task.title}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground mb-1">Presupuesto:</p>
-              <p className="font-semibold">{task.currency} {task.payment}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Formulario de propuesta */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Tab de Propuesta */}
+          <TabsContent value="propuesta">
+            <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="p-6">
             <h2 className="text-xl font-bold mb-4">Tu Propuesta</h2>
             
             <div className="space-y-4">
               <div className="bg-accent/30 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground mb-2">
+                <p className="text-sm text-muted-foreground">
                   Esta es tu propuesta para el proyecto y tu lugar para lucirte. Cuanto más completo esté tu primer mensaje, más posibilidades tendrás de destacarte. Sigue las buenas prácticas para orientarte.
-                </p>
-                <p className="text-sm font-medium text-foreground">
-                  Recuerda que todo intento de comunicación por afuera de la plataforma será penalizado. No te arriesgues compartiendo información de contacto.
                 </p>
               </div>
 
@@ -318,17 +308,118 @@ export function PropuestaPage() {
             >
               {loading ? 'Enviando propuesta...' : 'Realizar propuesta'}
             </Button>
+          </div>
+        </form>
+      </TabsContent>
+
+      {/* Tab de Consulta */}
+      <TabsContent value="consulta">
+        <form onSubmit={handleConsulta} className="space-y-6">
+          <Card className="p-6">
+            <h2 className="text-xl font-bold mb-4">Hacer una consulta</h2>
+            
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  Si tienes dudas sobre la tarea antes de enviar tu propuesta, puedes hacer una consulta al publicador. Esto te ayudará a preparar una mejor oferta.
+                </p>
+              </div>
+
+              <div>
+                <label htmlFor="consultaMessage" className="block text-sm font-medium mb-2">
+                  Tu consulta
+                </label>
+                <Textarea
+                  id="consultaMessage"
+                  placeholder="Escribe tu pregunta o consulta sobre la tarea..."
+                  value={consultaMessage}
+                  onChange={(e) => setConsultaMessage(e.target.value)}
+                  required
+                  rows={8}
+                  className="resize-none"
+                />
+              </div>
+            </div>
+          </Card>
+
+          <div className="flex gap-4">
             <Button
-              type="button"
+              type="submit"
+              className="flex-1 h-12 font-medium"
               variant="outline"
-              className="h-12 px-8"
-              onClick={() => navigate(-1)}
+              disabled={consultaLoading}
             >
-              Consulta
+              {consultaLoading ? 'Enviando consulta...' : 'Enviar consulta'}
             </Button>
           </div>
         </form>
+      </TabsContent>
+    </Tabs>
+  </div>
+
+  {/* Columna lateral (1/3) */}
+  <div className="space-y-6">
+    {/* Card Resumen de la Tarea */}
+    <Card className="p-6">
+      <h3 className="font-bold mb-3">{task.title}</h3>
+      
+      {/* Descripción */}
+      <p className="text-xs text-muted-foreground mb-4 line-clamp-3">
+        {task.description}
+      </p>
+
+      <div className="border-t border-slate-200 my-4" />
+
+      {/* Presupuesto en una línea */}
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">Presupuesto</span>
+        <div className="text-2xl font-bold text-[#34A853]">
+          {task.currency} {Number(task.payment).toFixed(2)}
+        </div>
       </div>
+    </Card>
+
+    {/* Card del Publicador */}
+    <Card className="p-6">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
+          <span className="font-semibold text-primary text-xl">
+            {getPosterName(task).charAt(0).toUpperCase()}
+          </span>
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-bold">{getPosterName(task)}</h3>
+            {isTaskVerified(task) && (
+              <CheckCircle weight="fill" className="w-4 h-4 text-[#34A853]" />
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">Perú</p>
+          <div className="flex items-center gap-1 text-amber-500 text-sm mt-1">
+            ★★★★★ <span className="text-xs text-muted-foreground ml-1">4.8</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3 text-sm">
+        <div>
+          <span className="font-semibold">Proyectos:</span> Publicados: 5 / Pagos: 10 (200%)
+        </div>
+        <div>
+          <span className="font-semibold">Registrado desde:</span> Mayo, 2019
+        </div>
+      </div>
+
+      <Badge variant="outline" className="text-yellow-700 border-yellow-300 bg-yellow-50 w-full justify-center mt-4">
+        Evaluando propuestas
+      </Badge>
+    </Card>
+  </div>
+</div>
+</div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

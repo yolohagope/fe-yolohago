@@ -23,6 +23,9 @@ export function MisTareas() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | 'all'>('all');
 
+  console.log('🎯 MisTareas: Componente renderizado');
+  console.log('📊 MisTareas: Estado actual - applications:', myApplications.length, 'published:', myPublishedTasks.length, 'loading:', loading);
+
   // Obtener tab activo desde URL o usar default
   const activeTab = searchParams.get('tab') || 'tomadas';
 
@@ -344,17 +347,55 @@ export function MisTareas() {
                 </Button>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="space-y-4">
                 {myPublishedTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    onClick={() => {
-                      setSelectedTask(task);
-                      setDialogOpen(true);
-                    }}
-                    type="publicada"
-                  />
+                  <Card key={task.id} className="p-6 hover:shadow-md transition-shadow">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h3 className="text-lg font-semibold mb-1">{task.title}</h3>
+                            <Badge variant="secondary" className="text-xs">
+                              {getCategoryName(task)}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {task.description}
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <div className="flex items-center gap-1">
+                            <CurrencyDollar className="w-5 h-5 text-[#34A853]" />
+                            <span className="font-semibold text-[#34A853]">{task.currency} {task.payment}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <MapPin className="w-4 h-4" />
+                            <span>{task.location}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>Vence: {new Date(task.deadline).toLocaleDateString('es-PE')}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>Publicado: {new Date(task.created_at || Date.now()).toLocaleDateString('es-PE')}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => navigate(`/publicaciones/${task.id}`)}
+                        className="text-primary hover:text-primary hover:bg-primary/10"
+                      >
+                        Ver detalle
+                        <CaretRight className="w-5 h-5 ml-1" weight="bold" />
+                      </Button>
+                    </div>
+                  </Card>
                 ))}
               </div>
             )}
