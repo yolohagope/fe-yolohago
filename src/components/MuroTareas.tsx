@@ -64,8 +64,8 @@ export function MuroTareas() {
       {/* Hero Section */}
       <HeroSection
         imageSrc="/images/tasks/explore_hero.png"
-        title="Encontrá tu próxima tarea"
-        subtitle="Miles de oportunidades te esperan. Ganá dinero haciendo lo que mejor sabés hacer."
+        title="Encuentra tu próxima tarea"
+        subtitle="Miles de oportunidades te esperan. Gana dinero haciendo lo que mejor sabes hacer."
       >
         {/* Buscador Principal */}
         <div className="bg-white rounded-2xl shadow-2xl p-2">
