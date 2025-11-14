@@ -13,6 +13,7 @@ import { MisTareas } from './components/MisTareas';
 import { Perfil } from './components/Perfil';
 import { Notificaciones } from './components/Notificaciones';
 import { PropuestaPage } from './pages/PropuestaPage';
+import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 
 function AppContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,6 +40,9 @@ function AppContent() {
         
         {/* Ruta para propuestas */}
         <Route path="/propuesta/:taskId" element={<PropuestaPage />} />
+        
+        {/* Ruta para detalle de propuesta */}
+        <Route path="/propuestas/:id" element={<ProtectedRoute><ApplicationDetailPage /></ProtectedRoute>} />
         
         {/* Ruta para búsqueda completa */}
         <Route path="/buscar" element={

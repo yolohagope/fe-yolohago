@@ -16,7 +16,10 @@ import {
   NotificationsResponse,
   NotificationType,
   NotificationPriority,
-  NotificationPreferences
+  NotificationPreferences,
+  Application,
+  CreateApplicationDTO,
+  AcceptApplicationResponse
 } from '@/lib/types';
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
@@ -1293,6 +1296,326 @@ export async function updateNotificationPreferences(preferences: Partial<Notific
     return data;
   } catch (error: any) {
     console.error('Error updating notification preferences:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+// ============================================
+// APPLICATIONS (POSTULACIONES)
+// ============================================
+
+/**
+ * Crear una nueva propuesta a una tarea
+ */
+export async function createApplication(payload: CreateApplicationDTO): Promise<Application> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      '/applications/',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Manejar errores específicos
+      if (errorData.non_field_errors) {
+        throw new Error(errorData.non_field_errors[0]);
+      }
+      if (errorData.detail) {
+        throw new Error(errorData.detail);
+      }
+      throw new Error('Error al crear propuesta');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error creating application:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener las propuestas del usuario autenticado
+ */
+export async function fetchMyApplications(status?: string): Promise<Application[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('mine', 'true');
+    if (status) {
+      queryParams.append('status', status);
+    }
+
+    const url = `/applications/?${queryParams.toString()}`;
+    console.log('🔍 fetchMyApplications - URL:', url);
+    console.log('🔍 fetchMyApplications - Status filter:', status);
+    
+    const response = await authenticatedFetch(user, url);
+    
+    console.log('📡 fetchMyApplications - Response status:', response.status);
+    console.log('📡 fetchMyApplications - Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error al obtener mis propuestas:', response.status, errorText);
+      throw new Error('Error al obtener mis propuestas');
+    }
+    
+    const rawText = await response.text();
+    console.log('📄 fetchMyApplications - Raw response:', rawText);
+    
+    const data = JSON.parse(rawText);
+    console.log('✅ fetchMyApplications - Parsed data:', data);
+    console.log('✅ fetchMyApplications - Data type:', typeof data);
+    console.log('✅ fetchMyApplications - Is array?:', Array.isArray(data));
+    
+    // Si la respuesta tiene paginación (results)
+    if (data && typeof data === 'object' && 'results' in data && Array.isArray(data.results)) {
+      console.log('📦 Respuesta paginada detectada, extrayendo results');
+      return data.results;
+    }
+    
+    return Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    console.error('Error fetching my applications:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    // Re-throw para que el componente pueda manejar el error
+    return [];
+  }
+}
+
+/**
+ * Obtener el detalle de una propuesta específica por ID
+ */
+export async function fetchApplicationById(applicationId: number): Promise<Application> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const url = `/applications/${applicationId}/`;
+    console.log('🔍 fetchApplicationById - URL:', url);
+    
+    const response = await authenticatedFetch(user, url);
+    
+    console.log('📡 fetchApplicationById - Response status:', response.status);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Propuesta no encontrada');
+      }
+      const errorText = await response.text();
+      console.error('❌ Error al obtener propuesta:', response.status, errorText);
+      throw new Error('Error al obtener propuesta');
+    }
+    
+    const data = await response.json();
+    console.log('✅ fetchApplicationById - Application:', data);
+    return data;
+  } catch (error: any) {
+    console.error('Error fetching application by id:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener las propuestas a las tareas publicadas por el usuario
+ */
+export async function fetchMyTasksApplications(status?: string): Promise<Application[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('my_tasks', 'true');
+    if (status) {
+      queryParams.append('status', status);
+    }
+
+    const url = `/applications/?${queryParams.toString()}`;
+    const response = await authenticatedFetch(user, url);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener propuestas a mis tareas');
+    }
+    
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    console.error('Error fetching my tasks applications:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener las propuestas de una tarea específica
+ */
+export async function fetchTaskApplications(taskId: number): Promise<Application[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const url = `/applications/?task=${taskId}`;
+    const response = await authenticatedFetch(user, url);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener propuestas de la tarea');
+    }
+    
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error: any) {
+    console.error('Error fetching task applications:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Aceptar una propuesta (crea automáticamente un contrato)
+ */
+export async function acceptApplication(applicationId: number): Promise<AcceptApplicationResponse> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `/applications/${applicationId}/accept/`,
+      {
+        method: 'POST'
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al aceptar propuesta');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error accepting application:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Rechazar una propuesta
+ */
+export async function rejectApplication(applicationId: number): Promise<{ message: string }> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `/applications/${applicationId}/reject/`,
+      {
+        method: 'POST'
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al rechazar propuesta');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error: any) {
+    console.error('Error rejecting application:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Eliminar una propuesta (solo si está en estado pending)
+ */
+export async function deleteApplication(applicationId: number): Promise<void> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `/applications/${applicationId}/`,
+      {
+        method: 'DELETE'
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al eliminar propuesta');
+    }
+  } catch (error: any) {
+    console.error('Error deleting application:', error);
     
     if (error.name === 'AuthenticationError') {
       await auth.signOut();

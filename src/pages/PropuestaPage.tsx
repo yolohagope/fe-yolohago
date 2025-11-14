@@ -7,20 +7,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchTaskById } from '@/services/api';
+import { fetchTaskById, createApplication } from '@/services/api';
 import { Task } from '@/lib/types';
 
 export function PropuestaPage() {
   const { taskId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [amount, setAmount] = useState('');
+  const [offeredPrice, setOfferedPrice] = useState('');
+  const [currency, setCurrency] = useState('S/');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [taskLoading, setTaskLoading] = useState(true);
   const [task, setTask] = useState<Task | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadTask() {
@@ -33,6 +36,9 @@ export function PropuestaPage() {
         const taskData = await fetchTaskById(taskId);
         if (taskData) {
           setTask(taskData);
+          // Pre-llenar con el precio y moneda de la tarea
+          setOfferedPrice(taskData.payment.toString());
+          setCurrency(taskData.currency);
         } else {
           setError('Tarea no encontrada');
         }
@@ -124,18 +130,29 @@ export function PropuestaPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setSubmitError(null);
 
-    // TODO: Implementar envío de propuesta a API
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      if (!taskId) {
+        throw new Error('ID de tarea no válido');
+      }
 
-    console.log('Propuesta enviada:', {
-      taskId,
-      amount,
-      message,
-      userId: user?.uid,
-    });
+      await createApplication({
+        task: parseInt(taskId),
+        offered_price: offeredPrice,
+        currency: currency,
+        message: message || undefined,
+      });
 
-    navigate('/?propuesta=enviada');
+      console.log('Postulación enviada exitosamente');
+
+      // Redirigir a Mis Tareas con el tab de "tomadas" activo
+      navigate('/mis-tareas?tab=tomadas&propuesta=enviada');
+    } catch (err: any) {
+      console.error('Error al enviar postulación:', err);
+      setSubmitError(err.message || 'Error al enviar la postulación. Por favor, intenta de nuevo.');
+      setLoading(false);
+    }
   }
 
   return (
@@ -203,7 +220,7 @@ export function PropuestaPage() {
 
         {/* Info de la tarea */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-2">Pasarela de pago</h1>
+          <h1 className="text-2xl font-bold mb-2">Preparar propuesta</h1>
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <p className="text-muted-foreground mb-1">Proyecto:</p>
@@ -219,36 +236,59 @@ export function PropuestaPage() {
         {/* Formulario de propuesta */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="p-6">
-            <h2 className="text-xl font-bold mb-4">Propuesta</h2>
+            <h2 className="text-xl font-bold mb-4">Tu Propuesta</h2>
             
             <div className="space-y-4">
               <div className="bg-accent/30 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground mb-2">
-                  Esta es tu postulación para el proyecto y tu lugar para lucirte. Cuanto más completo esté tu primer mensaje, más posibilidades tendrás de destacarte. Sigue las buenas prácticas para orientarte.
+                  Esta es tu propuesta para el proyecto y tu lugar para lucirte. Cuanto más completo esté tu primer mensaje, más posibilidades tendrás de destacarte. Sigue las buenas prácticas para orientarte.
                 </p>
                 <p className="text-sm font-medium text-foreground">
                   Recuerda que todo intento de comunicación por afuera de la plataforma será penalizado. No te arriesgues compartiendo información de contacto.
                 </p>
               </div>
 
-              <div>
-                <label htmlFor="amount" className="block text-sm font-medium mb-2">
-                  ¿Cuánto cobrarás por este trabajo? (S/)
-                </label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Ingresa tu monto"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  required
-                  min="1"
-                  step="0.01"
-                  className="h-12"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  El publicador ofreció {task.currency} {task.payment}
-                </p>
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+                  <p className="text-sm font-medium">{submitError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label htmlFor="offeredPrice" className="block text-sm font-medium mb-2">
+                    ¿Cuánto cobrarás por este trabajo?
+                  </label>
+                  <Input
+                    id="offeredPrice"
+                    type="number"
+                    placeholder="Ingresa tu monto"
+                    value={offeredPrice}
+                    onChange={(e) => setOfferedPrice(e.target.value)}
+                    required
+                    min="0.01"
+                    step="0.01"
+                    className="h-12"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    El publicador ofreció {task.currency} {task.payment}
+                  </p>
+                </div>
+
+                <div>
+                  <label htmlFor="currency" className="block text-sm font-medium mb-2">
+                    Moneda
+                  </label>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className="h-12">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="S/">Soles (S/)</SelectItem>
+                      <SelectItem value="$">Dólares ($)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div>
@@ -260,10 +300,12 @@ export function PropuestaPage() {
                   placeholder="Cuéntale al cliente por qué consideras que eres la persona ideal para su proyecto. Destaca tu experiencia, habilidades y motivación..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  required
                   rows={8}
                   className="resize-none"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  El mensaje es opcional pero aumenta tus posibilidades de ser seleccionado
+                </p>
               </div>
             </div>
           </Card>

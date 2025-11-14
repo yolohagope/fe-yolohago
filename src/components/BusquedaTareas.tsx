@@ -335,8 +335,11 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={!previousPage || currentPage === 1}
+                  onClick={() => {
+                    console.log('Página anterior clickeada. Página actual:', currentPage);
+                    setCurrentPage(prev => Math.max(1, prev - 1));
+                  }}
+                  disabled={currentPage === 1}
                   className="gap-1"
                 >
                   <CaretLeft weight="bold" size={16} />
@@ -363,7 +366,10 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
                         key={pageNum}
                         variant={currentPage === pageNum ? "default" : "outline"}
                         size="sm"
-                        onClick={() => setCurrentPage(pageNum)}
+                        onClick={() => {
+                          console.log('Página clickeada:', pageNum);
+                          setCurrentPage(pageNum);
+                        }}
                         className="w-10 h-10"
                       >
                         {pageNum}
@@ -375,8 +381,11 @@ export function BusquedaTareas({ initialSearchTerm = '', initialCategory = 'Toda
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                  disabled={!nextPage}
+                  onClick={() => {
+                    console.log('Página siguiente clickeada. Página actual:', currentPage);
+                    setCurrentPage(prev => prev + 1);
+                  }}
+                  disabled={currentPage >= Math.ceil(totalCount / pageSize)}
                   className="gap-1"
                 >
                   Siguiente

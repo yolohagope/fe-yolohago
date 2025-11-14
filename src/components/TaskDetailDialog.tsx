@@ -2,7 +2,7 @@ import { MapPin, Calendar, CheckCircle, Clock, X, User as UserIcon } from '@phos
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerClose } from '@/components/ui/drawer';
 import { Task } from '@/lib/types';
 import { getCategoryName, isTaskVerified, getPosterName } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,8 +46,9 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
     }
 
     if (!task) return;
+    // Abrir en nueva pestaña
+    window.open(`/propuesta/${task.id}`, '_blank');
     onClose();
-    navigate(`/propuesta/${task.id}`);
   }
 
   function handleAskQuestion() {
@@ -58,146 +59,156 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
     }
 
     if (!task) return;
+    // Abrir en nueva pestaña
+    window.open(`/propuesta/${task.id}`, '_blank');
     onClose();
-    navigate(`/propuesta/${task.id}`);
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold pr-8">
+    <Drawer open={open} onOpenChange={onClose}>
+      <DrawerContent className="h-[100vh] md:h-[92vh] md:max-w-3xl md:w-full">
+        {/* Header con título y detalles */}
+        <DrawerHeader className="relative border-b pb-4 shrink-0">
+          <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Cerrar</span>
+          </DrawerClose>
+          <DrawerTitle className="text-2xl font-bold pr-10 mb-4">
             {task.title}
-          </DialogTitle>
-        </DialogHeader>
+          </DrawerTitle>
+          
+          {/* Descripción */}
+          <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+            {task.description}
+          </p>
+        </DrawerHeader>
 
-        <div className="space-y-6 py-4">
-          {/* Precio destacado */}
-          <div className="flex items-center justify-between p-4 bg-accent/30 rounded-lg">
-            <span className="text-sm font-medium text-muted-foreground">Pago ofrecido</span>
-            <div className="text-3xl font-bold text-[#34A853]">
-              {task.currency} {Number(task.payment).toFixed(2)}
-            </div>
-          </div>
-
-          {/* Información importante del solicitante */}
-          <div className="border-l-4 border-primary bg-accent/30 p-4 rounded-r-lg">
-            <div className="flex gap-2 mb-2">
-              <span className="font-semibold">ℹ️ Descripción de la tarea</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {task.description}
-            </p>
-          </div>
-
-          {/* Detalles de la Tarea */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Detalles de la Tarea</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-start gap-3 p-3 bg-accent/20 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <UserIcon weight="duotone" className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Categoría</p>
-                  <Badge variant="outline" className={`${categoryColors[categoryName] || categoryColors['Otro']} mt-1`}>
-                    {categoryName}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-accent/20 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Clock weight="duotone" className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Duración Estimada</p>
-                  <p className="font-medium mt-1">4-5 horas (flexible)</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-accent/20 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Calendar weight="duotone" className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Plazo</p>
-                  <p className="font-medium mt-1">Hasta el {formattedDeadline}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 bg-accent/20 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <MapPin weight="duotone" className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Ubicación</p>
-                  <p className="font-medium mt-1">{task.location}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Requisitos Adicionales */}
-          <div>
-            <h3 className="text-lg font-semibold mb-3">Requisitos Adicionales</h3>
-            <ul className="space-y-2">
-              <li className="flex items-start gap-2 text-sm">
-                <span className="text-primary mt-0.5">•</span>
-                <span>Contar con teléfono propio con plan de minutos o ilimitado.</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <span className="text-primary mt-0.5">•</span>
-                <span>Tener un tono de voz amable y claro.</span>
-              </li>
-              <li className="flex items-start gap-2 text-sm">
-                <span className="text-primary mt-0.5">•</span>
-                <span>Disponibilidad para realizar las llamadas en horario de oficina (9am - 6pm).</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Publicado por */}
-          <div className="flex items-center gap-3 p-3 bg-accent/20 rounded-lg">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <span className="font-semibold text-primary">
-                {posterName.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Publicado por</p>
-              <p className="font-semibold">{posterName}</p>
-            </div>
-            {verified && (
-              <div className="ml-auto">
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-green-50 rounded-full">
-                  <CheckCircle weight="fill" className="w-4 h-4 text-[#34A853]" />
-                  <span className="text-xs font-medium text-[#34A853]">
-                    Verificado
+        {/* Contenido scrolleable */}
+        <div className="overflow-y-auto flex-1 px-4 md:px-6">
+          <div className="space-y-5 pt-5 pb-4">
+            {/* Card del publicador + Monto */}
+            <div className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-200">
+              {/* Info del publicador */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <span className="font-semibold text-primary text-lg">
+                    {posterName.charAt(0).toUpperCase()}
                   </span>
                 </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold">{posterName}</p>
+                    {verified && (
+                      <CheckCircle weight="fill" className="w-4 h-4 text-[#34A853]" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 text-amber-500 text-sm">
+                    ★★★★★
+                  </div>
+                </div>
               </div>
-            )}
-          </div>
 
-          {/* Botones de acción */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+              {/* Monto */}
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground mb-1">Dispuesto a pagar</p>
+                <div className="text-3xl font-bold text-[#34A853] leading-tight">
+                  {task.currency} {Number(task.payment).toFixed(2)}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">por esta tarea</p>
+              </div>
+            </div>
+
+            {/* Línea separadora */}
+            <div className="border-t border-slate-200" />
+
+            {/* Detalles */}
+            <div className="space-y-3">
+              <div className="space-y-2 text-sm text-slate-700">
+                <p>
+                  <span className="text-muted-foreground">Publicado hace </span>
+                  {format(new Date(task.created_at || Date.now()), "d 'días'", { locale: es })}
+                </p>
+                <div className="flex flex-wrap gap-3 pt-1">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <UserIcon weight="duotone" className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm">{categoryName}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <Clock weight="duotone" className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm">4-5 horas</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <Calendar weight="duotone" className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm">{formattedDeadline}</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                    <MapPin weight="duotone" className="w-4 h-4 text-slate-600" />
+                    <span className="text-sm">{task.location}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Línea separadora */}
+            <div className="border-t border-slate-200" />
+
+            {/* Línea separadora */}
+            <div className="border-t border-slate-200" />
+
+            {/* Requisitos */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Requisitos</h3>
+              <ul className="space-y-2.5">
+                <li className="flex items-start gap-2.5 text-sm text-slate-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                  <span>Contar con teléfono propio con plan de minutos o ilimitado.</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                  <span>Tener un tono de voz amable y claro.</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-sm text-slate-700">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0" />
+                  <span>Disponibilidad para realizar las llamadas en horario de oficina (9am - 6pm).</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Línea separadora */}
+            <div className="border-t border-slate-200" />
+
+            {/* Adjuntos */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Adjuntos</h3>
+              <div className="p-4 border border-dashed border-slate-300 rounded-lg text-center">
+                <p className="text-sm text-muted-foreground">No hay archivos adjuntos</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer fijo con botones */}
+        <div className="border-t bg-white p-3 md:p-4 shrink-0">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleApply}
-              className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium"
+              className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium shadow-sm"
             >
-              ¡Yo lo hago!
+              Enviar propuesta
             </Button>
             <Button
               onClick={handleAskQuestion}
               variant="outline"
-              className="flex-1 h-12 font-medium"
+              className="flex-1 h-12 font-medium border-slate-200 hover:bg-slate-50"
             >
               Hacer una pregunta
             </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 }

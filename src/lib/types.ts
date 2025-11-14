@@ -262,3 +262,31 @@ export interface NotificationPreferences {
   email_digest_frequency: 'instant' | 'daily' | 'weekly' | 'never';
 }
 
+// Applications (Postulaciones)
+export type ApplicationStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
+
+export interface Application {
+  id: number;
+  task: number;
+  task_title: string;
+  applicant_name: string;
+  offered_price: string;
+  currency: string;
+  message?: string;
+  status: ApplicationStatus;
+  created_at: string;
+}
+
+export interface CreateApplicationDTO {
+  task: number;
+  offered_price: string;
+  currency: string;
+  message?: string;
+}
+
+export interface AcceptApplicationResponse {
+  message: string;
+  application_id: number;
+  contract_id: number;
+}
+
