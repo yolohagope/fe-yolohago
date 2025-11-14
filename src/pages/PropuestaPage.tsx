@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Star, CheckCircle, Clock } from '@phosphor-icons/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchTaskById } from '@/services/api';
+import { Task } from '@/lib/types';
 
 export function PropuestaPage() {
   const { taskId } = useParams();
@@ -16,6 +18,34 @@ export function PropuestaPage() {
   const [amount, setAmount] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [taskLoading, setTaskLoading] = useState(true);
+  const [task, setTask] = useState<Task | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadTask() {
+      if (!taskId) return;
+      
+      setTaskLoading(true);
+      setError(null);
+      
+      try {
+        const taskData = await fetchTaskById(taskId);
+        if (taskData) {
+          setTask(taskData);
+        } else {
+          setError('Tarea no encontrada');
+        }
+      } catch (err: any) {
+        console.error('Error loading task:', err);
+        setError('Error al cargar los detalles de la tarea');
+      } finally {
+        setTaskLoading(false);
+      }
+    }
+
+    loadTask();
+  }, [taskId]);
 
   // Stats del usuario (en el futuro vendrán de la API)
   const userStats = {
@@ -25,12 +55,70 @@ export function PropuestaPage() {
     projectsPaid: 10,
   };
 
-  // Info de la tarea (en el futuro vendrá de la API)
-  const taskInfo = {
-    title: 'Llamar a lista de invitados de boda para confirmar asistencia',
-    status: 'Evaluando propuestas',
-    poster: 'Lucía R.',
-    budget: 150,
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Usuario';
+  const initials = displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  // Mostrar loading
+  if (taskLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border bg-card">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span>Volver</span>
+            </button>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Cargando detalles de la tarea...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar error
+  if (error || !task) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border bg-card">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span>Volver</span>
+            </button>
+          </div>
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="p-12 text-center">
+            <p className="text-red-600 mb-4">{error || 'Tarea no encontrada'}</p>
+            <Button onClick={() => navigate(-1)}>Volver</Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Determinar el badge de estado (por ahora mostrar siempre "Evaluando propuestas")
+  const getStatusBadge = () => {
+    return (
+      <Badge variant="outline" className="text-yellow-700 border-yellow-300 bg-yellow-50">
+        Evaluando propuestas
+      </Badge>
+    );
   };
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,14 +137,6 @@ export function PropuestaPage() {
 
     navigate('/?propuesta=enviada');
   }
-
-  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Usuario';
-  const initials = displayName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 
   return (
     <div className="min-h-screen bg-background">
@@ -127,11 +207,11 @@ export function PropuestaPage() {
           <div className="flex items-start gap-3">
             <div className="flex-1">
               <p className="text-muted-foreground mb-1">Proyecto:</p>
-              <p className="font-semibold">{taskInfo.title}</p>
+              <p className="font-semibold">{task.title}</p>
             </div>
             <div>
               <p className="text-muted-foreground mb-1">Presupuesto:</p>
-              <p className="font-semibold">S/ {taskInfo.budget}</p>
+              <p className="font-semibold">{task.currency} {task.payment}</p>
             </div>
           </div>
         </div>
@@ -167,7 +247,7 @@ export function PropuestaPage() {
                   className="h-12"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  El publicador ofreció S/ {taskInfo.budget}
+                  El publicador ofreció {task.currency} {task.payment}
                 </p>
               </div>
 
