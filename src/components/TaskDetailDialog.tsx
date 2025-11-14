@@ -68,7 +68,7 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
     <Drawer open={open} onOpenChange={onClose}>
       <DrawerContent className="h-[100vh] md:h-[92vh] md:max-w-3xl md:w-full">
         {/* Header con título y detalles */}
-        <DrawerHeader className="relative border-b pb-4 shrink-0">
+        <DrawerHeader className="relative border-b border-slate-200 pb-4 px-6 md:px-8 shrink-0">
           <DrawerClose className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none">
             <X className="h-5 w-5" />
             <span className="sr-only">Cerrar</span>
@@ -84,8 +84,8 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
         </DrawerHeader>
 
         {/* Contenido scrolleable */}
-        <div className="overflow-y-auto flex-1 px-4 md:px-6">
-          <div className="space-y-5 pt-5 pb-4">
+        <div className="overflow-y-auto flex-1 px-6 md:px-8">
+          <div className="space-y-5 pt-6 pb-5">
             {/* Card del publicador + Monto */}
             <div className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-200">
               {/* Info del publicador */}
@@ -191,7 +191,7 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
         </div>
 
         {/* Footer fijo con botones */}
-        <div className="border-t bg-white p-3 md:p-4 shrink-0">
+        <div className="border-t border-slate-200 bg-white px-6 md:px-8 py-4 md:py-5 shrink-0">
           <div className="flex flex-col sm:flex-row gap-3">
             <Button
               onClick={handleApply}
