@@ -264,13 +264,30 @@ export async function fetchMyTasks(): Promise<Task[]> {
 
 /**
  * Servicio para obtener las tareas que el usuario ha publicado
+ * Usa el filtro: GET /api/tasks/?poster={user_id}
  */
 export async function fetchMyPublishedTasks(): Promise<Task[]> {
   try {
     const user = auth.currentUser;
-    const response = await authenticatedFetch(user, '/tasks/my-published/', {
-      method: 'GET'
-    });
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    // Obtener el perfil del usuario para conseguir su user_id del backend
+    const profileResponse = await authenticatedFetch(user, `${API_BASE_URL}/users/profile/`);
+    
+    if (!profileResponse.ok) {
+      throw new Error('Error al obtener perfil de usuario');
+    }
+    
+    const profile = await profileResponse.json();
+    const userId = profile.id;
+
+    // Usar el filtro poster={user_id}
+    const response = await authenticatedFetch(
+      user, 
+      `${API_BASE_URL}/tasks/?poster=${userId}`
+    );
     
     if (!response.ok) {
       throw new Error(`Error al cargar mis publicaciones: ${response.statusText}`);

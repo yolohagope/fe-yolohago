@@ -48,6 +48,7 @@ export interface UserProfile {
   rating_count: number; // Número de calificaciones recibidas
   tasks_published: number; // Número de tareas publicadas
   tasks_completed: number; // Número de tareas completadas
+  is_verified: boolean; // Usuario verificado
   created_at: string;
   updated_at: string;
 }

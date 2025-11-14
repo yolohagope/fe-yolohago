@@ -64,7 +64,7 @@ export function MisTareas() {
 
         <Tabs defaultValue="tomadas" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="tomadas" className="flex items-center gap-2">
+            <TabsTrigger value="tomadas" className="flex items-center gap-2 cursor-pointer">
               <Package weight="bold" size={18} />
               Tareas Tomadas
               {myTasks.length > 0 && (
@@ -73,7 +73,7 @@ export function MisTareas() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="publicadas" className="flex items-center gap-2">
+            <TabsTrigger value="publicadas" className="flex items-center gap-2 cursor-pointer">
               <ClipboardText weight="bold" size={18} />
               Mis Publicaciones
               {myPublishedTasks.length > 0 && (

@@ -115,7 +115,18 @@ export function Perfil() {
                     <Camera weight="bold" size={14} />
                   </Button>
                 </div>
-                <h3 className="mt-2 font-semibold text-base text-center">{displayName}</h3>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <h3 className="font-semibold text-base text-center">{displayName}</h3>
+                  {profile?.is_verified && (
+                    <div title="Usuario verificado">
+                      <ShieldCheck 
+                        weight="fill" 
+                        size={18} 
+                        className="text-[#4285F4]"
+                      />
+                    </div>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground text-center break-all px-2 mt-0.5">{profile?.email || user.email}</p>
                 
                 {/* Rating con estrellas */}
@@ -286,7 +297,18 @@ function DatosPersonales({ profile, onUpdate }: { profile: UserProfile | null; o
 
   return (
     <Card className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Datos Personales</h2>
+      <div className="flex items-center gap-2 mb-6">
+        <h2 className="text-2xl font-bold">Datos Personales</h2>
+        {profile?.is_verified && (
+          <div title="Usuario verificado">
+            <ShieldCheck 
+              weight="fill" 
+              size={24} 
+              className="text-[#4285F4]"
+            />
+          </div>
+        )}
+      </div>
       
       {success && (
         <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6 text-sm">
