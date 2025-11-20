@@ -156,35 +156,32 @@ export function MisTareas() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Mis Tareas</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Mis Tareas</h1>
+          <p className="text-sm text-gray-600">
             Gestiona las tareas que has tomado y las que has publicado
           </p>
         </div>
 
         {showSuccessBanner && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-3">
-              <div className="bg-green-100 rounded-full p-1.5">
-                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="bg-green-500 rounded-full p-1.5">
+                <CheckCircle className="w-5 h-5 text-white" weight="fill" />
               </div>
               <div>
-                <p className="font-semibold">¡Propuesta enviada exitosamente!</p>
-                <p className="text-sm text-green-700">Podrás ver el estado de tu propuesta aquí</p>
+                <p className="font-semibold text-sm">¡Propuesta enviada exitosamente!</p>
+                <p className="text-xs text-green-700">Podrás ver el estado de tu propuesta aquí</p>
               </div>
             </div>
             <button
               onClick={() => setShowSuccessBanner(false)}
               className="text-green-600 hover:text-green-800 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <XCircle className="w-5 h-5" weight="bold" />
             </button>
           </div>
         )}
@@ -194,68 +191,108 @@ export function MisTareas() {
           newParams.set('tab', value);
           setSearchParams(newParams);
         }} className="w-full">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="tomadas" className="flex items-center gap-2 cursor-pointer">
-              <Package weight="bold" size={18} />
-              Mis Propuestas
+          {/* Tabs mejorados */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-1 inline-flex gap-1 mb-6">
+            <button
+              onClick={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('tab', 'tomadas');
+                setSearchParams(newParams);
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                activeTab === 'tomadas'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <Package weight={activeTab === 'tomadas' ? 'fill' : 'regular'} size={18} />
+              <span>Mis Propuestas</span>
               {myApplications.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  activeTab === 'tomadas'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
                   {myApplications.length}
-                </Badge>
+                </span>
               )}
-            </TabsTrigger>
-            <TabsTrigger value="publicadas" className="flex items-center gap-2 cursor-pointer">
-              <ClipboardText weight="bold" size={18} />
-              Mis Publicaciones
+            </button>
+            <button
+              onClick={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('tab', 'publicadas');
+                setSearchParams(newParams);
+              }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
+                activeTab === 'publicadas'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <ClipboardText weight={activeTab === 'publicadas' ? 'fill' : 'regular'} size={18} />
+              <span>Mis Publicaciones</span>
               {myPublishedTasks.length > 0 && (
-                <Badge variant="secondary" className="ml-1">
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                  activeTab === 'publicadas'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}>
                   {myPublishedTasks.length}
-                </Badge>
+                </span>
               )}
-            </TabsTrigger>
-          </TabsList>
+            </button>
+          </div>
 
           <TabsContent value="tomadas" className="mt-6">
-            {/* Filtros por estado */}
+            {/* Filtros mejorados */}
             <div className="flex flex-wrap gap-2 mb-6">
-              <Button
-                variant={statusFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
+              <button
                 onClick={() => setStatusFilter('all')}
                 disabled={loadingApplications}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  statusFilter === 'all'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                }`}
               >
                 Todas
-              </Button>
-              <Button
-                variant={statusFilter === 'pending' ? 'default' : 'outline'}
-                size="sm"
+              </button>
+              <button
                 onClick={() => setStatusFilter('pending')}
                 disabled={loadingApplications}
-                className={statusFilter === 'pending' ? '' : 'text-yellow-600 border-yellow-300 hover:bg-yellow-50'}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  statusFilter === 'pending'
+                    ? 'bg-yellow-500 text-white shadow-sm'
+                    : 'bg-white text-yellow-600 border border-yellow-200 hover:bg-yellow-50'
+                }`}
               >
-                <Hourglass className="w-4 h-4 mr-1" />
+                <Hourglass className="w-4 h-4" weight={statusFilter === 'pending' ? 'fill' : 'regular'} />
                 Pendientes
-              </Button>
-              <Button
-                variant={statusFilter === 'accepted' ? 'default' : 'outline'}
-                size="sm"
+              </button>
+              <button
                 onClick={() => setStatusFilter('accepted')}
                 disabled={loadingApplications}
-                className={statusFilter === 'accepted' ? '' : 'text-green-600 border-green-300 hover:bg-green-50'}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  statusFilter === 'accepted'
+                    ? 'bg-green-500 text-white shadow-sm'
+                    : 'bg-white text-green-600 border border-green-200 hover:bg-green-50'
+                }`}
               >
-                <CheckCircle className="w-4 h-4 mr-1" />
+                <CheckCircle className="w-4 h-4" weight={statusFilter === 'accepted' ? 'fill' : 'regular'} />
                 Aceptadas
-              </Button>
-              <Button
-                variant={statusFilter === 'rejected' ? 'default' : 'outline'}
-                size="sm"
+              </button>
+              <button
                 onClick={() => setStatusFilter('rejected')}
                 disabled={loadingApplications}
-                className={statusFilter === 'rejected' ? '' : 'text-red-600 border-red-300 hover:bg-red-50'}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  statusFilter === 'rejected'
+                    ? 'bg-red-500 text-white shadow-sm'
+                    : 'bg-white text-red-600 border border-red-200 hover:bg-red-50'
+                }`}
               >
-                <XCircle className="w-4 h-4 mr-1" />
+                <XCircle className="w-4 h-4" weight={statusFilter === 'rejected' ? 'fill' : 'regular'} />
                 Rechazadas
-              </Button>
+              </button>
             </div>
 
             {loadingApplications ? (
@@ -263,9 +300,11 @@ export function MisTareas() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
             ) : myApplications.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Package weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center shadow-sm">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Package weight="thin" size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {statusFilter === 'all' 
                     ? 'No has enviado ninguna propuesta' 
                     : `No tienes propuestas ${
@@ -275,45 +314,46 @@ export function MisTareas() {
                       }`
                   }
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-sm text-gray-600 mb-6">
                   {statusFilter === 'all'
                     ? 'Explora el muro de tareas y envía propuestas a las que te interesen'
                     : 'Intenta con otro filtro o explora más tareas'
                   }
                 </p>
-                <Button onClick={() => statusFilter === 'all' ? window.location.href = '/' : setStatusFilter('all')}>
+                <Button 
+                  onClick={() => statusFilter === 'all' ? window.location.href = '/' : setStatusFilter('all')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   {statusFilter === 'all' ? 'Explorar Tareas' : 'Ver Todas'}
                 </Button>
-              </Card>
+              </div>
             ) : (
               <div className="space-y-4">
                 {myApplications.map((application) => (
-                  <Card key={application.id} className="p-6 hover:shadow-md transition-shadow">
+                  <div key={application.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold mb-1">{application.task_title}</h3>
-                          </div>
+                        <div className="flex items-start justify-between mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900">{application.task_title}</h3>
                           {getStatusBadge(application.status)}
                         </div>
 
                         {application.message && (
-                          <div className="mt-3 p-3 bg-accent/30 rounded-lg">
-                            <p className="text-sm text-muted-foreground font-medium mb-1">Tu mensaje:</p>
-                            <p className="text-sm">{application.message}</p>
+                          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                            <p className="text-xs font-semibold text-blue-900 mb-1">Tu mensaje:</p>
+                            <p className="text-sm text-blue-800">{application.message}</p>
                           </div>
                         )}
 
                         <div className="flex items-center gap-4 mt-4">
-                          <div className="flex items-center gap-1">
-                            <CurrencyDollar className="w-5 h-5 text-muted-foreground" />
-                            <span className="font-semibold">{application.currency} {application.offered_price}</span>
-                            <span className="text-sm text-muted-foreground">tu oferta</span>
+                          <div className="flex items-center gap-1.5">
+                            <CurrencyDollar className="w-5 h-5 text-green-600" weight="bold" />
+                            <span className="font-bold text-green-600">S/ {application.offered_price}</span>
+                            <span className="text-sm text-gray-500">tu oferta</span>
                           </div>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1 text-sm text-gray-500">
                             <Clock className="w-4 h-4" />
-                            {new Date(application.created_at).toLocaleDateString()}
+                            {new Date(application.created_at).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}
                           </div>
                         </div>
                       </div>
@@ -322,13 +362,13 @@ export function MisTareas() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleViewApplicationDetail(application)}
-                        className="text-primary hover:text-primary hover:bg-primary/10"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium shrink-0"
                       >
                         Ver detalle
                         <CaretRight className="w-5 h-5 ml-1" weight="bold" />
                       </Button>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}
@@ -336,51 +376,50 @@ export function MisTareas() {
 
           <TabsContent value="publicadas" className="mt-6">
             {myPublishedTasks.length === 0 ? (
-              <Card className="p-12 text-center">
-                <ClipboardText weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">No has publicado ninguna tarea</h3>
-                <p className="text-muted-foreground mb-6">
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center shadow-sm">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <ClipboardText weight="thin" size={32} className="text-gray-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No has publicado ninguna tarea</h3>
+                <p className="text-sm text-gray-600 mb-6">
                   Publica tu primera tarea y recibe propuestas de trabajadores
                 </p>
-                <Button onClick={() => window.location.href = '/?view=publicar'}>
+                <Button 
+                  onClick={() => window.location.href = '/?view=publicar'}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   Publicar Tarea
                 </Button>
-              </Card>
+              </div>
             ) : (
               <div className="space-y-4">
                 {myPublishedTasks.map((task) => (
-                  <Card key={task.id} className="p-6 hover:shadow-md transition-shadow">
+                  <div key={task.id} className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-all">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <h3 className="text-lg font-semibold mb-1">{task.title}</h3>
-                            <Badge variant="secondary" className="text-xs">
-                              {getCategoryName(task)}
-                            </Badge>
-                          </div>
+                        <div className="flex items-start gap-3 mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900 flex-1">{task.title}</h3>
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-700 text-xs shrink-0">
+                            {getCategoryName(task)}
+                          </Badge>
                         </div>
 
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                           {task.description}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1">
-                            <CurrencyDollar className="w-5 h-5 text-[#34A853]" />
-                            <span className="font-semibold text-[#34A853]">{task.currency} {task.payment}</span>
+                          <div className="flex items-center gap-1.5">
+                            <CurrencyDollar className="w-5 h-5 text-green-600" weight="bold" />
+                            <span className="font-bold text-green-600">S/ {task.payment}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
+                          <div className="flex items-center gap-1 text-gray-500">
                             <MapPin className="w-4 h-4" />
                             <span>{task.location}</span>
                           </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
+                          <div className="flex items-center gap-1 text-gray-500">
                             <Clock className="w-4 h-4" />
-                            <span>Vence: {new Date(task.deadline).toLocaleDateString('es-PE')}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <Clock className="w-4 h-4" />
-                            <span>Publicado: {new Date(task.created_at || Date.now()).toLocaleDateString('es-PE')}</span>
+                            <span>{new Date(task.deadline).toLocaleDateString('es-PE', { day: 'numeric', month: 'short' })}</span>
                           </div>
                         </div>
                       </div>
@@ -389,13 +428,13 @@ export function MisTareas() {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate(`/publicaciones/${task.id}`)}
-                        className="text-primary hover:text-primary hover:bg-primary/10"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium shrink-0"
                       >
                         Ver detalle
                         <CaretRight className="w-5 h-5 ml-1" weight="bold" />
                       </Button>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}
@@ -409,60 +448,5 @@ export function MisTareas() {
         onClose={() => setDialogOpen(false)}
       />
     </div>
-  );
-}
-
-interface TaskCardProps {
-  task: Task;
-  onClick: () => void;
-  type: 'tomada' | 'publicada';
-}
-
-function TaskCard({ task, onClick, type }: TaskCardProps) {
-  // Usar helpers para obtener valores
-  const categoryName = getCategoryName(task);
-  const posterName = getPosterName(task);
-  
-  return (
-    <Card
-      className="p-5 hover:shadow-lg transition-all cursor-pointer border-l-4"
-      style={{ borderLeftColor: type === 'tomada' ? '#4285F4' : '#34A853' }}
-      onClick={onClick}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <Badge variant={type === 'tomada' ? 'default' : 'secondary'}>
-          {type === 'tomada' ? 'En progreso' : 'Publicada'}
-        </Badge>
-        <span className="text-sm text-muted-foreground">{categoryName}</span>
-      </div>
-
-      <h3 className="text-lg font-semibold mb-2 line-clamp-2">{task.title}</h3>
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-        {task.description}
-      </p>
-
-      <div className="space-y-2 text-sm">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <MapPin weight="bold" size={16} />
-          <span>{task.location}</span>
-        </div>
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock weight="bold" size={16} />
-          <span>Vence: {new Date(task.deadline).toLocaleDateString('es-PE')}</span>
-        </div>
-        <div className="flex items-center gap-2 font-semibold text-[#34A853]">
-          <CurrencyDollar weight="bold" size={16} />
-          <span>{task.currency}{task.payment}</span>
-        </div>
-      </div>
-
-      {type === 'publicada' && (
-        <div className="mt-4 pt-4 border-t">
-          <p className="text-sm text-muted-foreground">
-            Publicado por: <span className="font-medium text-foreground">{posterName}</span>
-          </p>
-        </div>
-      )}
-    </Card>
   );
 }

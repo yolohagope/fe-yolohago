@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Task } from '@/lib/types';
 import { getCategoryName, isTaskVerified, getCategoryBannerUrl, getPosterName } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -15,6 +16,7 @@ interface TarjetaTareaProps {
 
 export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const categoryColors: Record<string, string> = {
     'Compras': 'bg-blue-50 text-blue-700 border-blue-200',
@@ -42,6 +44,9 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
   
   // Extraer primera letra del nombre para el avatar
   const posterInitial = nameParts[0].charAt(0).toUpperCase();
+
+  // Verificar si la tarea es del usuario actual
+  const isOwnTask = user && task.poster_email && user.email === task.poster_email;
 
   const handleYoloHago = (e: React.MouseEvent) => {
     e.stopPropagation(); // Evitar que se dispare el click de la tarjeta
@@ -110,13 +115,22 @@ export function TarjetaTarea({ task, onViewDetails }: TarjetaTareaProps) {
 
           {/* Botón */}
           <div className="flex items-center justify-between pt-3 border-t relative z-20">
-            {/* Botón de acción principal */}
-            <Button 
-              className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full relative z-30 pointer-events-auto"
-              onClick={handleYoloHago}
-            >
-              ¡Yolo Hago!
-            </Button>
+            {/* Botón de acción principal - solo si NO es tu propia tarea */}
+            {!isOwnTask && (
+              <Button 
+                className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-full relative z-30 pointer-events-auto"
+                onClick={handleYoloHago}
+              >
+                ¡Yolo Hago!
+              </Button>
+            )}
+
+            {/* Si es tu propia tarea, mostrar badge */}
+            {isOwnTask && (
+              <Badge variant="outline" className="flex-1 justify-center bg-slate-50 text-slate-600 border-slate-300">
+                Tu publicación
+              </Badge>
+            )}
 
             {/* Estado verificado */}
             {verified && (

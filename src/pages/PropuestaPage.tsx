@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchTaskById, createApplication } from '@/services/api';
+import { fetchTaskById, createApplication, createInquiry } from '@/services/api';
 import { Task } from '@/lib/types';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -155,20 +155,33 @@ export function PropuestaPage() {
 
   async function handleConsulta(e: React.FormEvent) {
     e.preventDefault();
+    
+    if (!consultaMessage.trim()) {
+      alert('Por favor escribe tu consulta');
+      return;
+    }
+
+    if (!taskId) {
+      alert('Error: ID de tarea no disponible');
+      return;
+    }
+
     setConsultaLoading(true);
 
     try {
-      // TODO: Implementar API para enviar consulta
-      console.log('Consulta enviada:', consultaMessage);
+      await createInquiry({
+        task: parseInt(taskId),
+        question: consultaMessage.trim()
+      });
       
-      // Simular envío
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('Consulta enviada exitosamente');
+      alert('Consulta enviada exitosamente. El publicador de la tarea responderá pronto.');
       setConsultaMessage('');
+      
+      // Opcionalmente redirigir a "Mis Tareas"
+      // navigate('/mis-tareas');
     } catch (err: any) {
       console.error('Error al enviar consulta:', err);
-      alert('Error al enviar la consulta');
+      alert(err.message || 'Error al enviar la consulta');
     } finally {
       setConsultaLoading(false);
     }
@@ -181,7 +194,7 @@ export function PropuestaPage() {
 
       {/* Breadcrumb */}
       <div className="border-b bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <nav className="flex items-center gap-2 text-sm text-muted-foreground">
             <button
               onClick={() => navigate('/')}
@@ -203,7 +216,7 @@ export function PropuestaPage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Layout de 2 columnas */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Columna principal (2/3) */}

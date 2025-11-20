@@ -19,7 +19,10 @@ import {
   NotificationPreferences,
   Application,
   CreateApplicationDTO,
-  AcceptApplicationResponse
+  AcceptApplicationResponse,
+  Inquiry,
+  CreateInquiryDTO,
+  AnswerInquiryDTO
 } from '@/lib/types';
 import { authenticatedFetch } from './backend-auth';
 import { auth } from '@/lib/firebase';
@@ -1636,3 +1639,248 @@ export async function deleteApplication(applicationId: number): Promise<void> {
   }
 }
 
+// =====================================================
+// INQUIRIES (CONSULTAS)
+// =====================================================
+
+/**
+ * Obtener consultas de una tarea
+ */
+export async function fetchTaskInquiries(taskId: number): Promise<Inquiry[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    console.log(`📋 Consultando inquiries de tarea ${taskId}`);
+
+    const response = await authenticatedFetch(
+      user,
+      `/inquiries/?task=${taskId}`
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener consultas');
+    }
+
+    const data = await response.json();
+    // El endpoint retorna {count, next, previous, results}
+    const inquiries = data.results || [];
+    console.log(`✅ ${inquiries.length} consultas encontradas`);
+    
+    return inquiries;
+  } catch (error: any) {
+    console.error('Error fetching task inquiries:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener todas las consultas a mis tareas publicadas (para el inbox)
+ */
+export async function fetchMyTasksInquiries(): Promise<Inquiry[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    console.log('📋 Consultando inquiries a mis tareas');
+
+    const response = await authenticatedFetch(
+      user,
+      '/inquiries/?my_tasks=true'
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener consultas');
+    }
+
+    const data = await response.json();
+    const inquiries = data.results || [];
+    console.log(`✅ ${inquiries.length} consultas a mis tareas encontradas`);
+    
+    return inquiries;
+  } catch (error: any) {
+    console.error('Error fetching my tasks inquiries:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtener mis consultas (las que yo hice)
+ */
+export async function fetchMyInquiries(): Promise<Inquiry[]> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    console.log('📋 Consultando mis inquiries');
+
+    const response = await authenticatedFetch(
+      user,
+      '/inquiries/?mine=true'
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al obtener consultas');
+    }
+
+    const data = await response.json();
+    const inquiries = data.results || [];
+    console.log(`✅ ${inquiries.length} consultas mías encontradas`);
+    
+    return inquiries;
+  } catch (error: any) {
+    console.error('Error fetching my inquiries:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Crear una nueva consulta
+ */
+export async function createInquiry(payload: CreateInquiryDTO): Promise<Inquiry> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    console.log('📝 Creando nueva consulta:', payload);
+
+    const response = await authenticatedFetch(
+      user,
+      `/inquiries/`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Error del servidor:', errorData);
+      throw new Error(errorData.error || 'Error al crear consulta');
+    }
+
+    const data = await response.json();
+    console.log('✅ Consulta creada:', data);
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error creating inquiry:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Responder una consulta (solo publicador)
+ */
+export async function answerInquiry(inquiryId: number, payload: AnswerInquiryDTO): Promise<Inquiry> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    console.log(`💬 Respondiendo consulta ${inquiryId}:`, payload);
+
+    const response = await authenticatedFetch(
+      user,
+      `/inquiries/${inquiryId}/answer/`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('❌ Error del servidor:', errorData);
+      throw new Error(errorData.error || 'Error al responder consulta');
+    }
+
+    const data = await response.json();
+    console.log('✅ Respuesta del servidor:', data);
+    
+    // El API retorna { message, inquiry }
+    // Devolvemos solo el inquiry
+    return data.inquiry || data;
+  } catch (error: any) {
+    console.error('Error answering inquiry:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Eliminar una consulta
+ */
+export async function deleteInquiry(inquiryId: number): Promise<void> {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('Usuario no autenticado');
+    }
+
+    const response = await authenticatedFetch(
+      user,
+      `/inquiries/${inquiryId}/`,
+      {
+        method: 'DELETE'
+      }
+    );
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error al eliminar consulta');
+    }
+    
+    console.log(`✅ Consulta ${inquiryId} eliminada`);
+  } catch (error: any) {
+    console.error('Error deleting inquiry:', error);
+    
+    if (error.name === 'AuthenticationError') {
+      await auth.signOut();
+    }
+    
+    throw error;
+  }
+}

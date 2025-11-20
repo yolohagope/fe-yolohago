@@ -290,3 +290,36 @@ export interface AcceptApplicationResponse {
   contract_id: number;
 }
 
+// Inquiries (Consultas)
+export interface Inquiry {
+  id: number;
+  task: number;
+  task_title?: string;
+  task_poster_id?: number;
+  sender?: number; // El que envía la consulta (inquirer)
+  sender_name?: string;
+  poster_name?: string; // El publicador de la tarea
+  inquirer?: number; // Alias de sender (mantener por compatibilidad)
+  inquirer_name?: string; // Alias de sender_name
+  question: string;
+  answer?: string | null;
+  is_answered?: boolean;
+  answered_by?: number | null;
+  answered_by_name?: string | null;
+  answered_at?: string | null;
+  is_public?: boolean; // Si la consulta es pública o privada
+  is_sender?: boolean; // ¿Yo hice esta pregunta?
+  is_poster?: boolean; // ¿Yo soy el dueño de la tarea?
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateInquiryDTO {
+  task: number;
+  question: string;
+  is_public?: boolean; // Opcional, default: true
+}
+
+export interface AnswerInquiryDTO {
+  answer: string;
+}

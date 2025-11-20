@@ -15,6 +15,7 @@ import { Notificaciones } from './components/Notificaciones';
 import { PropuestaPage } from './pages/PropuestaPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { PublicationDetailPage } from './pages/PublicationDetailPage';
+import { Inbox } from './components/Inbox';
 
 function AppContent() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +48,9 @@ function AppContent() {
         
         {/* Ruta para detalle de publicación */}
         <Route path="/publicaciones/:taskId" element={<ProtectedRoute><PublicationDetailPage /></ProtectedRoute>} />
+        
+        {/* Ruta para Inbox (mensajes y consultas) */}
+        <Route path="/inbox" element={<ProtectedRoute><Inbox /></ProtectedRoute>} />
         
         {/* Ruta para búsqueda completa */}
         <Route path="/buscar" element={

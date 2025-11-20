@@ -38,6 +38,9 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
   const verified = isTaskVerified(task);
   const posterName = getPosterName(task);
 
+  // Verificar si la tarea es del usuario actual
+  const isOwnTask = user && task.poster_email && user.email === task.poster_email;
+
   function handleApply() {
     if (!user) {
       onClose();
@@ -192,21 +195,29 @@ export function TaskDetailDialog({ task, open, onClose }: TaskDetailDialogProps)
 
         {/* Footer fijo con botones */}
         <div className="border-t border-slate-200 bg-white px-6 md:px-8 py-4 md:py-5 shrink-0">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button
-              onClick={handleApply}
-              className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium shadow-sm cursor-pointer"
-            >
-              Enviar propuesta
-            </Button>
-            <Button
-              onClick={handleAskQuestion}
-              variant="outline"
-              className="flex-1 h-12 font-medium border-slate-200 hover:bg-slate-50 cursor-pointer"
-            >
-              Hacer una pregunta
-            </Button>
-          </div>
+          {isOwnTask ? (
+            <div className="p-4 bg-slate-50 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground">
+                Esta es tu publicación. Puedes ver las propuestas recibidas en "Mis Tareas".
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={handleApply}
+                className="flex-1 h-12 bg-[#4285F4] hover:bg-[#357ae8] text-white font-medium shadow-sm cursor-pointer"
+              >
+                Enviar propuesta
+              </Button>
+              <Button
+                onClick={handleAskQuestion}
+                variant="outline"
+                className="flex-1 h-12 font-medium border-slate-200 hover:bg-slate-50 cursor-pointer"
+              >
+                Hacer una pregunta
+              </Button>
+            </div>
+          )}
         </div>
       </DrawerContent>
     </Drawer>

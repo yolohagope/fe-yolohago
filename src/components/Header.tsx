@@ -1,4 +1,4 @@
-import { SignOut, User, PlusCircle, MagnifyingGlass, ListChecks, Bell } from '@phosphor-icons/react';
+import { SignOut, User, PlusCircle, MagnifyingGlass, ListChecks, Bell, ChatCircle } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -23,6 +23,7 @@ export function Header() {
 
   // TODO: Este dato debería venir del backend
   const notificationCount: number = 3;
+  const unreadMessagesCount: number = 2; // TODO: Traer del backend
 
   async function handleLogout() {
     try {
@@ -94,6 +95,21 @@ export function Header() {
             {/* Elementos de usuario */}
             {user ? (
               <>
+                {/* Icono de Inbox/Mensajes */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => navigate('/inbox')}
+                >
+                  <ChatCircle weight="bold" size={20} />
+                  {unreadMessagesCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                    </span>
+                  )}
+                </Button>
+
                 {/* Campanita de notificaciones */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -208,6 +224,15 @@ export function Header() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </div>
+                    <DropdownMenuItem onClick={() => navigate('/inbox')}>
+                      <ChatCircle className="mr-2 h-4 w-4" />
+                      <span>Mensajes</span>
+                      {unreadMessagesCount > 0 && (
+                        <Badge className="ml-auto bg-blue-500 text-white">
+                          {unreadMessagesCount}
+                        </Badge>
+                      )}
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate('/cuenta')}>
                       <User className="mr-2 h-4 w-4" />
                       <span>Mi cuenta</span>

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   MapPin, 
   Calendar, 
@@ -13,13 +15,22 @@ import {
   Hourglass,
   House,
   CaretRight,
-  User as UserIcon
+  User as UserIcon,
+  Package,
+  ChatCircle
 } from '@phosphor-icons/react';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
-import { fetchTaskById, fetchTaskApplications, acceptApplication, rejectApplication } from '@/services/api';
-import { Task, Application, ApplicationStatus } from '@/lib/types';
-import { getCategoryName, isTaskVerified, getPosterName } from '@/lib/utils';
+import { 
+  fetchTaskById, 
+  fetchTaskApplications, 
+  acceptApplication, 
+  rejectApplication,
+  fetchTaskInquiries,
+  answerInquiry
+} from '@/services/api';
+import { Task, Application, ApplicationStatus, Inquiry } from '@/lib/types';
+import { getCategoryName } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -31,9 +42,16 @@ export function PublicationDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
+  
+  // Estado para consultas
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [loadingInquiries, setLoadingInquiries] = useState(false);
+  const [replyTexts, setReplyTexts] = useState<Record<number, string>>({});
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
 
   useEffect(() => {
     loadTaskAndApplications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
 
   async function loadTaskAndApplications() {
@@ -51,14 +69,30 @@ export function PublicationDetailPage() {
       if (taskData) {
         setTask(taskData);
         setApplications(applicationsData);
+        // Cargar consultas después de cargar la tarea exitosamente
+        loadInquiries(parseInt(taskId));
       } else {
         setError('Tarea no encontrada');
       }
     } catch (err: any) {
       console.error('Error loading task and applications:', err);
-      setError('Error al cargar los detalles de la tarea');
+      setError(err.message || 'Error al cargar los detalles de la tarea');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadInquiries(taskId: number) {
+    try {
+      setLoadingInquiries(true);
+      const inquiriesData = await fetchTaskInquiries(taskId);
+      setInquiries(inquiriesData);
+    } catch (err: any) {
+      console.error('Error loading inquiries (non-critical):', err);
+      // No mostramos error al usuario, solo dejamos las consultas vacías
+      setInquiries([]);
+    } finally {
+      setLoadingInquiries(false);
     }
   }
 
@@ -93,6 +127,31 @@ export function PublicationDetailPage() {
       alert(error.message || 'Error al rechazar propuesta');
     } finally {
       setProcessingId(null);
+    }
+  }
+
+  async function handleReplyInquiry(inquiryId: number) {
+    const replyText = replyTexts[inquiryId]?.trim();
+    if (!replyText) {
+      alert('Por favor escribe una respuesta');
+      return;
+    }
+
+    try {
+      setReplyingTo(inquiryId);
+      await answerInquiry(inquiryId, { answer: replyText });
+      
+      // Recargar consultas
+      if (taskId) {
+        await loadInquiries(parseInt(taskId));
+      }
+      
+      // Limpiar el campo de respuesta
+      setReplyTexts(prev => ({ ...prev, [inquiryId]: '' }));
+    } catch (error: any) {
+      alert(error.message || 'Error al enviar respuesta');
+    } finally {
+      setReplyingTo(null);
     }
   }
 
@@ -138,7 +197,10 @@ export function PublicationDetailPage() {
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Cargando detalles...</p>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-gray-600 font-medium">Cargando detalles de la publicación...</p>
+            </div>
           </div>
         </div>
         <Footer />
@@ -152,8 +214,11 @@ export function PublicationDetailPage() {
         <Header />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card className="p-12 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Error al cargar</h2>
             <p className="text-red-600 mb-4">{error || 'Tarea no encontrada'}</p>
-            <Button onClick={() => navigate('/mis-tareas?tab=publicadas')}>Volver</Button>
+            <Button onClick={() => navigate('/mis-tareas?tab=publicadas')}>
+              Volver a Mis Publicaciones
+            </Button>
           </Card>
         </div>
         <Footer />
@@ -162,8 +227,6 @@ export function PublicationDetailPage() {
   }
 
   const pendingApplications = applications.filter(app => app.status === 'pending');
-  const acceptedApplications = applications.filter(app => app.status === 'accepted');
-  const rejectedApplications = applications.filter(app => app.status === 'rejected');
 
   return (
     <div className="min-h-screen bg-background">
@@ -196,86 +259,206 @@ export function PublicationDetailPage() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Columna izquierda: Lista de propuestas (2/3) */}
+          {/* Columna izquierda: Tabs de Propuestas y Consultas (2/3) */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Propuestas Recibidas</h2>
-              <p className="text-muted-foreground">
-                {applications.length} propuesta{applications.length !== 1 ? 's' : ''} en total
-                {pendingApplications.length > 0 && ` · ${pendingApplications.length} pendiente${pendingApplications.length !== 1 ? 's' : ''}`}
-              </p>
-            </div>
+            <Tabs defaultValue="propuestas" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+                <TabsTrigger 
+                  value="propuestas" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                >
+                  <Package className="w-4 h-4" />
+                  Propuestas ({applications.length})
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="consultas" 
+                  className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                >
+                  <ChatCircle className="w-4 h-4" />
+                  Consultas ({inquiries.length})
+                </TabsTrigger>
+              </TabsList>
 
-            {applications.length === 0 ? (
-              <Card className="p-12 text-center">
-                <Hourglass weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-xl font-semibold mb-2">No hay propuestas aún</h3>
-                <p className="text-muted-foreground">
-                  Las propuestas aparecerán aquí cuando los trabajadores se postulen a tu tarea
-                </p>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                {applications.map((application) => (
-                  <Card key={application.id} className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
-                            <span className="font-semibold text-primary text-lg">
-                              {application.applicant_name.charAt(0).toUpperCase()}
+              {/* Tab de Propuestas */}
+              <TabsContent value="propuestas" className="space-y-4 mt-6">
+                <div className="mb-4">
+                  <p className="text-muted-foreground">
+                    {applications.length} propuesta{applications.length !== 1 ? 's' : ''} en total
+                    {pendingApplications.length > 0 && ` · ${pendingApplications.length} pendiente${pendingApplications.length !== 1 ? 's' : ''}`}
+                  </p>
+                </div>
+
+                {applications.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <Package weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold mb-2">No hay propuestas aún</h3>
+                    <p className="text-muted-foreground">
+                      Las propuestas aparecerán aquí cuando los trabajadores se postulen a tu tarea
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {applications.map((application) => (
+                      <Card key={application.id} className="p-6">
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
+                                <span className="font-semibold text-primary text-lg">
+                                  {application.applicant_name.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{application.applicant_name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Aplicó el {format(new Date(application.created_at), "d 'de' MMMM", { locale: es })}
+                                </p>
+                              </div>
+                            </div>
+                            {getStatusBadge(application.status)}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <CurrencyDollar className="w-5 h-5 text-[#34A853]" />
+                            <span className="text-2xl font-bold text-[#34A853]">
+                              {application.currency} {application.offered_price}
                             </span>
                           </div>
-                          <div>
-                            <h3 className="font-semibold">{application.applicant_name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              Aplicó el {format(new Date(application.created_at), "d 'de' MMMM", { locale: es })}
-                            </p>
-                          </div>
-                        </div>
-                        {getStatusBadge(application.status)}
-                      </div>
 
-                      <div className="flex items-center gap-2">
-                        <CurrencyDollar className="w-5 h-5 text-[#34A853]" />
-                        <span className="text-2xl font-bold text-[#34A853]">
-                          {application.currency} {application.offered_price}
-                        </span>
-                      </div>
+                          {application.message && (
+                            <div className="p-4 bg-accent/30 rounded-lg">
+                              <p className="text-sm font-medium mb-1">Mensaje del postulante:</p>
+                              <p className="text-sm">{application.message}</p>
+                            </div>
+                          )}
 
-                      {application.message && (
-                        <div className="p-4 bg-accent/30 rounded-lg">
-                          <p className="text-sm font-medium mb-1">Mensaje del postulante:</p>
-                          <p className="text-sm">{application.message}</p>
+                          {application.status === 'pending' && (
+                            <div className="flex gap-3 pt-2">
+                              <Button
+                                onClick={() => handleAcceptApplication(application.id)}
+                                disabled={processingId === application.id}
+                                className="flex-1 bg-[#34A853] hover:bg-[#2d8f47]"
+                              >
+                                <CheckCircle className="w-4 h-4 mr-2" weight="fill" />
+                                {processingId === application.id ? 'Procesando...' : 'Aceptar'}
+                              </Button>
+                              <Button
+                                onClick={() => handleRejectApplication(application.id)}
+                                disabled={processingId === application.id}
+                                variant="outline"
+                                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" weight="fill" />
+                                {processingId === application.id ? 'Procesando...' : 'Rechazar'}
+                              </Button>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
 
-                      {application.status === 'pending' && (
-                        <div className="flex gap-3 pt-2">
-                          <Button
-                            onClick={() => handleAcceptApplication(application.id)}
-                            disabled={processingId === application.id}
-                            className="flex-1 bg-[#34A853] hover:bg-[#2d8f47]"
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" weight="fill" />
-                            Aceptar
-                          </Button>
-                          <Button
-                            onClick={() => handleRejectApplication(application.id)}
-                            disabled={processingId === application.id}
-                            variant="outline"
-                            className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                          >
-                            <XCircle className="w-4 h-4 mr-2" weight="fill" />
-                            Rechazar
-                          </Button>
-                        </div>
-                      )}
-                    </div>
+              {/* Tab de Consultas - Estilo foro */}
+              <TabsContent value="consultas" className="space-y-4 mt-6">
+                <div className="mb-4">
+                  <p className="text-muted-foreground">
+                    {inquiries.length} consulta{inquiries.length !== 1 ? 's' : ''} en total
+                  </p>
+                </div>
+
+                {loadingInquiries ? (
+                  <Card className="p-8 text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+                    <p className="text-sm text-muted-foreground">Cargando consultas...</p>
                   </Card>
-                ))}
-              </div>
-            )}
+                ) : inquiries.length === 0 ? (
+                  <Card className="p-12 text-center">
+                    <ChatCircle weight="thin" size={64} className="mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold mb-2">No hay consultas aún</h3>
+                    <p className="text-muted-foreground">
+                      Las consultas aparecerán aquí cuando alguien haga preguntas sobre tu tarea
+                    </p>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {inquiries.map((inquiry) => (
+                      <Card key={inquiry.id} className="p-6">
+                        <div className="space-y-4">
+                          {/* Pregunta original */}
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-full flex items-center justify-center shrink-0">
+                              <span className="font-semibold text-blue-600 text-sm">
+                                {(inquiry.sender_name || inquiry.inquirer_name || 'U').charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-semibold text-sm">{inquiry.sender_name || inquiry.inquirer_name || 'Usuario'}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(inquiry.created_at), "d 'de' MMMM 'a las' HH:mm", { locale: es })}
+                                </span>
+                                {inquiry.is_public === false && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Privada
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm">{inquiry.question}</p>
+                            </div>
+                          </div>
+
+                          {/* Respuesta si existe */}
+                          {inquiry.answer && (
+                            <div className="ml-10 pl-4 border-l-2 border-primary/20">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
+                                  <UserIcon className="w-4 h-4 text-primary" />
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-semibold text-sm">Tú</span>
+                                    {inquiry.answered_at && (
+                                      <span className="text-xs text-muted-foreground">
+                                        {format(new Date(inquiry.answered_at), "d 'de' MMMM 'a las' HH:mm", { locale: es })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm">{inquiry.answer}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Campo de respuesta si no hay respuesta */}
+                          {!inquiry.answer && (
+                            <div className="ml-10 space-y-2">
+                              <Textarea
+                                placeholder="Escribe tu respuesta..."
+                                value={replyTexts[inquiry.id] || ''}
+                                onChange={(e) => setReplyTexts(prev => ({ ...prev, [inquiry.id]: e.target.value }))}
+                                rows={3}
+                                className="resize-none"
+                              />
+                              <div className="flex justify-end">
+                                <Button
+                                  onClick={() => handleReplyInquiry(inquiry.id)}
+                                  disabled={replyingTo === inquiry.id || !replyTexts[inquiry.id]?.trim()}
+                                  size="sm"
+                                >
+                                  {replyingTo === inquiry.id ? 'Enviando...' : 'Responder'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Columna derecha: Detalles de la tarea (1/3) */}

@@ -187,7 +187,7 @@ export function ApplicationDetailPage() {
 
       {/* Breadcrumb y Badge de estado */}
       <div className="border-b bg-background">
-        <div className="container mx-auto px-4 py-4 max-w-5xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {/* Breadcrumb */}
             <nav className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -216,7 +216,7 @@ export function ApplicationDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Información según estado - Ancho completo */}
         {application.status === 'pending' && (
           <Card className="p-4 bg-blue-50 border-blue-200 mb-6">
@@ -251,11 +251,18 @@ export function ApplicationDetailPage() {
 
               <div className="border-t border-slate-200 my-4" />
 
-              {/* Card del publicador + Monto */}
+              {/* Publicado hace */}
+              {task && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Publicado hace {format(new Date(task.created_at || Date.now()), "d 'días'", { locale: es })}
+                </p>
+              )}
+
+              {/* Card del publicador + Monto en dos columnas */}
               {task ? (
-                <div className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-200 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   {/* Info del publicador */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50/80 rounded-xl border border-slate-200">
                     <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center shrink-0">
                       <span className="font-semibold text-primary text-lg">
                         {getPosterName(task).charAt(0).toUpperCase()}
@@ -275,7 +282,7 @@ export function ApplicationDetailPage() {
                   </div>
 
                   {/* Monto */}
-                  <div className="text-center">
+                  <div className="flex flex-col justify-center items-center p-4 bg-slate-50/80 rounded-xl border border-slate-200">
                     <p className="text-xs text-muted-foreground mb-1">Dispuesto a pagar</p>
                     <div className="text-3xl font-bold text-[#34A853] leading-tight">
                       {task.currency} {Number(task.payment).toFixed(2)}
@@ -295,33 +302,27 @@ export function ApplicationDetailPage() {
               {task && (
                 <>
                   <div className="space-y-3 mb-4">
-                    <div className="space-y-2 text-sm text-slate-700">
-                      <p>
-                        <span className="text-muted-foreground">Publicado hace </span>
-                        {format(new Date(task.created_at || Date.now()), "d 'días'", { locale: es })}
-                      </p>
-                      <div className="flex flex-wrap gap-3 pt-1">
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                          <UserIcon weight="duotone" className="w-4 h-4 text-slate-600" />
-                          <span className="text-sm">{getCategoryName(task)}</span>
-                        </div>
+                    <div className="flex flex-wrap gap-3">
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                        <UserIcon weight="duotone" className="w-4 h-4 text-slate-600" />
+                        <span className="text-sm">{getCategoryName(task)}</span>
+                      </div>
 
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                          <Clock weight="duotone" className="w-4 h-4 text-slate-600" />
-                          <span className="text-sm">4-5 horas</span>
-                        </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                        <Clock weight="duotone" className="w-4 h-4 text-slate-600" />
+                        <span className="text-sm">4-5 horas</span>
+                      </div>
 
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                          <Calendar weight="duotone" className="w-4 h-4 text-slate-600" />
-                          <span className="text-sm">
-                            {format(new Date(task.deadline), "d 'de' MMMM, yyyy", { locale: es })}
-                          </span>
-                        </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                        <Calendar weight="duotone" className="w-4 h-4 text-slate-600" />
+                        <span className="text-sm">
+                          {format(new Date(task.deadline), "d 'de' MMMM, yyyy", { locale: es })}
+                        </span>
+                      </div>
 
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
-                          <MapPin weight="duotone" className="w-4 h-4 text-slate-600" />
-                          <span className="text-sm">{task.location}</span>
-                        </div>
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200">
+                        <MapPin weight="duotone" className="w-4 h-4 text-slate-600" />
+                        <span className="text-sm">{task.location}</span>
                       </div>
                     </div>
                   </div>
